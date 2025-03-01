@@ -225,10 +225,204 @@ function setupVideoPlayback() {
     scene.addEventListener('arReady', playVideos);
 }
 
+// New function to fetch hadith data
+async function fetchDailyHadith() {
+    try {
+        const response = await fetch('https://islamic-api-zhirrr.vercel.app/api/quotes');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching hadith:", error);
+        return { 
+            arabic: "Error loading hadith",
+            text: "Please check your connection"
+        };
+    }
+}
+
+// Function to fetch Hijri calendar data
+async function fetchHijriCalendar() {
+    try {
+        // Using aladhan.com API which is reliable for Hijri dates
+        const response = await fetch('https://api.aladhan.com/v1/gToH');
+        const data = await response.json();
+        return data.data;
+    } catch (error) {
+        console.error("Error fetching Hijri calendar:", error);
+        return null;
+    }
+}
+
+// Function to create and add the UI overlay for hadith and calendar
+async function addHadithCalendarOverlay() {
+    // Create container for the overlay
+    const overlayContainer = document.createElement('div');
+    overlayContainer.id = 'hadith-calendar-overlay';
+    
+    // Style the overlay
+    Object.assign(overlayContainer.style, {
+        position: 'absolute',
+        bottom: '20px',
+        left: '20px',
+        width: '300px',
+        padding: '15px',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        borderRadius: '10px',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+        zIndex: '1000',
+        fontFamily: 'Arial, sans-serif',
+        color: '#333',
+        transition: 'opacity 0.5s',
+        opacity: '0'
+    });
+    
+    // Fetch hadith data
+    const hadith = await fetchDailyHadith();
+    
+    // Fetch Hijri calendar data
+    const hijriData = await fetchHijriCalendar();
+    
+    // Get Gregorian date
+    const today = new Date();
+    const gregorianDate = today.toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+    
+    // Format Hijri date if available
+    let hijriDate = "Loading Hijri date...";
+    if (hijriData) {
+        hijriDate = `${hijriData.hijri.day} ${hijriData.hijri.month.en} ${hijriData.hijri.year} H`;
+    }
+    
+    // Create content for the overlay
+    overlayContainer.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 16px; font-weight: bold; color: #1e88e5; margin-bottom: 5px;">Daily Hadith</div>
+            <div style="font-size: 14px; line-height: 1.4; margin-bottom: 8px;">${hadith.text || "Loading hadith..."}</div>
+            <div style="font-size: 12px; font-style: italic; text-align: right;">H.R. ${hadith.author || "..."}</div>
+        </div>
+        <div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+            <div style="font-size: 16px; font-weight: bold; color: #1e88e5; margin-bottom: 5px;">Calendar</div>
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 14px; font-weight: bold;">Hijri</div>
+                    <div style="font-size: 12px;">${hijriDate}</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; font-weight: bold;">Gregorian</div>
+                    <div style="font-size: 12px;">${gregorianDate}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(overlayContainer);
+    
+    // Fade in the overlay
+    setTimeout(() => {
+        overlayContainer.style.opacity = '1';
+    }, 500);
+    
+    // Add a button to toggle the display
+    const toggleButton = document.createElement('button');
+    toggleButton.textContent = '≡';
+    Object.assign(toggleButton.style, {
+        position: 'absolute',
+        bottom: '20px',
+        left: '10px',
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        backgroundColor: '#1e88e5',
+        color: 'white',
+        border: 'none',
+        fontSize: '20px',
+        cursor: 'pointer',
+        zIndex: '1001',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+    });
+    
+    // Hide the overlay initially
+    overlayContainer.style.transform = 'translateX(-320px)';
+    let isVisible = false;
+    
+    // Toggle visibility when button is clicked
+    toggleButton.addEventListener('click', () => {
+        if (isVisible) {
+            overlayContainer.style.transform = 'translateX(-320px)';
+        } else {
+            overlayContainer.style.transform = 'translateX(0)';
+        }
+        isVisible = !isVisible;
+    });
+    
+    document.body.appendChild(toggleButton);
+    
+    // Update hadith and calendar daily
+    setInterval(async () => {
+        const newHadith = await fetchDailyHadith();
+        const newHijriData = await fetchHijriCalendar();
+        
+        // Update hadith text
+        const hadithTextElement = overlayContainer.querySelector('div > div:nth-child(2)');
+        hadithTextElement.textContent = newHadith.text || "Error loading hadith";
+        
+        // Update hadith author
+        const hadithAuthorElement = overlayContainer.querySelector('div > div:nth-child(3)');
+        hadithAuthorElement.textContent = `H.R. ${newHadith.author || "..."}`;
+        
+        // Update Hijri date
+        const hijriDateElement = overlayContainer.querySelector('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)');
+        if (newHijriData) {
+            hijriDateElement.textContent = `${newHijriData.hijri.day} ${newHijriData.hijri.month.en} ${newHijriData.hijri.year} H`;
+        }
+    }, 24 * 60 * 60 * 1000); // Update every 24 hours
+}
+
+// Initialize the overlay when the AR scene is ready
+document.addEventListener('DOMContentLoaded', () => {
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('arReady', () => {
+        console.log("AR is ready, adding hadith and calendar overlay");
+        addHadithCalendarOverlay();
+    });
+});
+
+// Modify the original fetchAnimations function to position AR elements to make room for the overlay
+const originalFetchAnimations = fetchAnimations;
+fetchAnimations = async function() {
+    await originalFetchAnimations();
+    
+    // Adjust position of AR entities to leave space for the hadith and calendar
+    const entityContainer = document.querySelector('#entity-container');
+    const entities = entityContainer.querySelectorAll('a-entity');
+    
+    entities.forEach(entity => {
+        // Adjust position slightly to the right
+        const targetEntity = entity.querySelector('[mindar-image-target]');
+        if (targetEntity) {
+            const videoElement = targetEntity.querySelector('a-video, a-plane');
+            if (videoElement) {
+                // Get current position
+                const currentPosition = videoElement.getAttribute('position');
+                // Shift position to the right a bit
+                videoElement.setAttribute('position', `${currentPosition.x + 0.2} ${currentPosition.y} ${currentPosition.z}`);
+            }
+        }
+    });
+};
+
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     fetchAnimations();
     setupVideoPlayback();
+    fetchDailyHadith();
+    fetchHijriCalendar();
     
     // Add listener for AR events for debugging
     const scene = document.querySelector('a-scene');
