@@ -8,7 +8,7 @@
   <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://unpkg.com/aframe-transparent-video-shader-corrected@1.0.0/dist/transparent-video-shader.js"></script>
-   
+  
   <!-- Your App Logic -->
   <script type="module" src="app.js"></script>
   
@@ -16,13 +16,6 @@
     body { margin: 0; overflow: hidden; }
     a-video, video { background-color: transparent !important; }
     a-plane { background-color: transparent !important; }
-
-    /* Styles for hadith and calendar overlay */
-    #hadith-calendar-overlay {
-      font-family: 'Arial', sans-serif;
-      transition: transform 0.3s ease;
-    }
-    
     /* Hide video elements */
     #assets-container video {
       position: absolute;
@@ -30,11 +23,29 @@
       left: -9999px;
       visibility: hidden;
     }
+    #date-hadith-overlay {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 400px;
+        padding: 12px;
+        background: rgba(0,0,0,0.7);
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        border-radius: 10px;
+        pointer-events: none;
+        z-index: 1000;
+        text-align: center;
+    }
   </style>
 </head>
 
 <body>
-  <a-scene 
+    <a-scene 
       mindar-image="imageTargetSrc: https://fdphjxbjnononpxljrgb.supabase.co/storage/v1/object/public/marker.animation/targets/targets.mind; autoStart: true;" 
       renderer="alpha: true; colorManagement: true; precision: high; antialias: true; gammaOutput: true"
       color-space="sRGB"
@@ -49,5 +60,7 @@
       <!-- This container will hold all video entities -->
       <a-entity id="entity-container"></a-entity>
   </a-scene>
+
+  <div id="date-hadith-overlay" style="display: none;"></div>
 </body>
 </html>
