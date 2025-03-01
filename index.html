@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  
+  <title>fhrSTD-AR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- A-Frame & MindAR -->
+  <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://unpkg.com/aframe-transparent-video-shader-corrected@1.0.0/dist/transparent-video-shader.js"></script>
+   
+  <!-- Your App Logic -->
+  <script type="module" src="app.js"></script>
+  
+  <style>
+    body { margin: 0; overflow: hidden; }
+    a-video, video { background-color: transparent !important; }
+    a-plane { background-color: transparent !important; }
+    
+    /* Hide video elements */
+    #assets-container video {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      visibility: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <a-scene 
+      mindar-image="imageTargetSrc: https://fdphjxbjnononpxljrgb.supabase.co/storage/v1/object/public/marker.animation/targets/targets.mind; autoStart: true;" 
+      renderer="alpha: true; colorManagement: true; precision: high; antialias: true; gammaOutput: true"
+      color-space="sRGB"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false">
+      
+      <!-- Asset container (videos will be injected here dynamically) -->
+      <a-assets id="assets-container"></a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <!-- This container will hold all video entities -->
+      <a-entity id="entity-container"></a-entity>
+  </a-scene>
+</body>
+</html>
