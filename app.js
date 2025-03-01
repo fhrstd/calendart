@@ -93,9 +93,11 @@ if (!AFRAME.components['ios-alpha-video']) {
     });
 }
 
-// Extension to app.js - Add hadith and calendar display
+// Extension to app.js - Add hadith and calendar display with proper function handling
 
-// New function to fetch hadith data from a working API
+// Hadith and calendar functionality - Add this to your app.js file
+
+// Function to fetch hadith data from a working API
 async function fetchDailyHadith() {
     try {
         // Using a more reliable hadith API
@@ -228,9 +230,9 @@ function createHadithCalendarForTarget(targetEntity, hadithData, hijriData) {
     return infoPanel;
 }
 
-// Modified fetchAnimations function to include hadith and calendar with each AR target
-async function enhancedFetchAnimations() {
-    // Fetch hadith and calendar data first
+// Modified initialization - this replaces the original DOMContentLoaded event handler
+document.addEventListener('DOMContentLoaded', async () => {
+    // First fetch the hadith and calendar data
     const [hadithData, hijriData] = await Promise.all([
         fetchDailyHadith(),
         fetchHijriCalendar()
@@ -238,130 +240,141 @@ async function enhancedFetchAnimations() {
     
     console.log("Fetched hadith and calendar data:", { hadithData, hijriData });
     
-    // Now fetch animations
-    const { data: animations, error } = await supabase
-        .from('animations')
-        .select('target_id, video_url, video_url_mov, name');
-
-    if (error) {
-        console.error("Error fetching data:", error);
-        return;
-    }
-
-    const assetsContainer = document.querySelector('#assets-container');
-    const entityContainer = document.querySelector('#entity-container');
+    // Set up video playback
+    setupVideoPlayback();
     
-    // For iOS workaround, we need to keep track of video loading
-    const videoPromises = [];
+    // Add listener for AR events for debugging
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('arReady', () => {
+        console.log("MindAR is ready");
+    });
+    
+    scene.addEventListener('arError', (event) => {
+        console.error("MindAR error:", event);
+    });
+    
+    // Enhanced version of fetchAnimations that includes hadith and calendar
+    async function fetchAnimationsWithHadith() {
+        const { data: animations, error } = await supabase
+            .from('animations')
+            .select('target_id, video_url, video_url_mov, name');
 
-    animations.forEach(item => {
-        // Create video asset (unchanged from original)
-        const videoAsset = document.createElement('video');
-        const videoId = item.name;
-        videoAsset.setAttribute('id', videoId);
-        
-        // Use the correct video source based on device
-        const videoSrc = isAppleDevice() ? item.video_url_mov : item.video_url;
-        videoAsset.setAttribute('src', videoSrc);
-        videoAsset.setAttribute('type', isAppleDevice() ? "video/mp4;codecs=hvc1" : "video/webm");
-        
-        // Set video attributes for proper playback
-        videoAsset.setAttribute('loop', 'true');
-        videoAsset.setAttribute('autoplay', 'true');
-        videoAsset.setAttribute('muted', 'true');
-        videoAsset.setAttribute('playsinline', 'true');
-        videoAsset.setAttribute('webkit-playsinline', 'true');
-        videoAsset.setAttribute('crossorigin', 'anonymous');
-        
-        // Additional color management attributes for iOS
-        if (isAppleDevice()) {
-            if ('colorSpaceUtilities' in window) {
-                videoAsset.setAttribute('colorspace', 'display-p3');
-            }
+        if (error) {
+            console.error("Error fetching data:", error);
+            return;
         }
+
+        const assetsContainer = document.querySelector('#assets-container');
+        const entityContainer = document.querySelector('#entity-container');
         
-        videoAsset.style.backgroundColor = 'transparent';
-        
-        // Wait for video metadata to load
-        const videoLoaded = new Promise((resolve) => {
-            videoAsset.addEventListener('loadedmetadata', () => {
-                console.log(`Video ${videoId} metadata loaded (${videoAsset.videoWidth}x${videoAsset.videoHeight})`);
-                resolve();
+        // For iOS workaround, we need to keep track of video loading
+        const videoPromises = [];
+
+        animations.forEach(item => {
+            // Create video asset
+            const videoAsset = document.createElement('video');
+            const videoId = item.name;
+            videoAsset.setAttribute('id', videoId);
+            
+            // Use the correct video source based on device
+            const videoSrc = isAppleDevice() ? item.video_url_mov : item.video_url;
+            videoAsset.setAttribute('src', videoSrc);
+            videoAsset.setAttribute('type', isAppleDevice() ? "video/mp4;codecs=hvc1" : "video/webm");
+            
+            // Set video attributes for proper playback
+            videoAsset.setAttribute('loop', 'true');
+            videoAsset.setAttribute('autoplay', 'true');
+            videoAsset.setAttribute('muted', 'true');
+            videoAsset.setAttribute('playsinline', 'true');
+            videoAsset.setAttribute('webkit-playsinline', 'true');
+            videoAsset.setAttribute('crossorigin', 'anonymous');
+            
+            // Additional color management attributes
+            if (isAppleDevice()) {
+                if ('colorSpaceUtilities' in window) {
+                    videoAsset.setAttribute('colorspace', 'display-p3');
+                }
+            }
+            
+            videoAsset.style.backgroundColor = 'transparent';
+            
+            // Wait for video metadata to load
+            const videoLoaded = new Promise((resolve) => {
+                videoAsset.addEventListener('loadedmetadata', () => {
+                    console.log(`Video ${videoId} metadata loaded (${videoAsset.videoWidth}x${videoAsset.videoHeight})`);
+                    resolve();
+                });
+                
+                // Add fallback for video load failure
+                videoAsset.addEventListener('error', (e) => {
+                    console.error(`Error loading video ${videoId}:`, e);
+                    resolve(); // Resolve anyway to prevent blocking
+                });
             });
             
-            // Add fallback for video load failure
-            videoAsset.addEventListener('error', (e) => {
-                console.error(`Error loading video ${videoId}:`, e);
-                resolve(); // Resolve anyway to prevent blocking
-            });
+            videoPromises.push(videoLoaded);
+            assetsContainer.appendChild(videoAsset);
         });
-        
-        videoPromises.push(videoLoaded);
-        assetsContainer.appendChild(videoAsset);
-    });
 
-    // Wait for all videos to be ready before creating entities
-    await Promise.all(videoPromises);
-    console.log("All videos loaded");
+        // Wait for all videos to be ready before creating entities
+        await Promise.all(videoPromises);
+        console.log("All videos loaded");
 
-    animations.forEach((elm) => {
-        const target = document.createElement('a-entity');
-        let targetEntity;
-        
-        if (isAppleDevice()) {
-            // For iOS devices, use our custom canvas-based approach
-            target.innerHTML = `
-              <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
-                <a-plane
-                  width="1" 
-                  height="1.4"
-                  position="0 0 0"
-                  ios-alpha-video="src: #${elm.name}"
-                ></a-plane>
-              </a-entity>
-            `;
-            targetEntity = target.querySelector('[mindar-image-target]');
-        } else {
-            // For non-iOS, use the transparent video shader
-            target.innerHTML = `
-              <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
-                <a-video
-                  material="shader: transparent-video; src: #${elm.name}"
-                  width="1" 
-                  height="1.4"
-                  position="0 0 0"
-                  autoplay
-                  loop
-                  muted
-                  transparent="true"
-                  crossorigin="anonymous"
-                  playsinline
-                ></a-video>
-              </a-entity>
-            `;
-            targetEntity = target.querySelector('[mindar-image-target]');
-        }
-        
-        // Add the target to the container
-        entityContainer.appendChild(target);
-        
-        // Attach hadith and calendar to the AR entity
-        if (targetEntity) {
-            createHadithCalendarForTarget(targetEntity, hadithData, hijriData);
-        }
-    });
+        animations.forEach((elm) => {
+            const target = document.createElement('a-entity');
+            let targetEntity;
+            
+            if (isAppleDevice()) {
+                // For iOS devices, use our custom canvas-based approach
+                target.innerHTML = `
+                  <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
+                    <a-plane
+                      width="1" 
+                      height="1.4"
+                      position="0 0 0"
+                      ios-alpha-video="src: #${elm.name}"
+                    ></a-plane>
+                  </a-entity>
+                `;
+                targetEntity = target.querySelector('[mindar-image-target]');
+            } else {
+                // For non-iOS, use the transparent video shader
+                target.innerHTML = `
+                  <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
+                    <a-video
+                      material="shader: transparent-video; src: #${elm.name}"
+                      width="1" 
+                      height="1.4"
+                      position="0 0 0"
+                      autoplay
+                      loop
+                      muted
+                      transparent="true"
+                      crossorigin="anonymous"
+                      playsinline
+                    ></a-video>
+                  </a-entity>
+                `;
+                targetEntity = target.querySelector('[mindar-image-target]');
+            }
+            
+            // Add the target to the container
+            entityContainer.appendChild(target);
+            
+            // Attach hadith and calendar to the AR entity
+            if (targetEntity) {
+                createHadithCalendarForTarget(targetEntity, hadithData, hijriData);
+            }
+        });
 
-    console.log("Entities with hadith and calendar added");
+        console.log("Entities with hadith and calendar added");
+        
+        // Force play all videos
+        document.querySelectorAll('video').forEach(video => {
+            video.play().catch(e => console.error("Video play error:", e));
+        });
+    }
     
-    // Force play all videos
-    document.querySelectorAll('video').forEach(video => {
-        video.play().catch(e => console.error("Video play error:", e));
-    });
-}
-
-// Replace the original fetchAnimations function
-const originalFetchAnimations = fetchAnimations;
-fetchAnimations = enhancedFetchAnimations;
-
-// Keep the original video playback setup (no changes needed here)
-// This will use your existing setupVideoPlayback function
+    // Execute the enhanced function
+    fetchAnimationsWithHadith();
+});
