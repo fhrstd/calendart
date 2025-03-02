@@ -1,0 +1,84 @@
+/* styles.css */
+
+/* General body styling */
+body { 
+  margin: 0; 
+  overflow: hidden; 
+  font-family: Arial, sans-serif; /* Adjust font family as needed */
+}
+
+/* Styling for A-Frame video and plane elements */
+a-video, video { 
+  background-color: transparent !important; 
+}
+
+a-plane { 
+  background-color: transparent !important; 
+}
+
+/* Hide video elements in the assets container */
+#assets-container video {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  visibility: hidden;
+}
+
+/* Styling for the calendar and Hadith container */
+.info-container {
+  position: absolute;
+  bottom: 20px; /* Adjust distance from the bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%; /* Adjust width as needed */
+  max-width: 600px; /* Adjust maximum width */
+  background: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 1000; /* Ensure it appears above other elements */
+}
+
+/* Styling for the Hijri and Gregorian date sections */
+.info-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px; /* Adjust font size */
+}
+
+.info-container p {
+  margin: 5px 0;
+  font-size: 16px; /* Adjust font size */
+}
+
+/* Styling for the Hadith section */
+.info-container .hadith-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3); /* Separator line */
+}
+
+.info-container .hadith-section p {
+  margin: 5px 0;
+  font-size: 14px; /* Adjust font size */
+}
+
+/* Adjustments for smaller screens */
+@media (max-width: 600px) {
+  .info-container {
+    width: 95%; /* Adjust width for smaller screens */
+    padding: 10px;
+  }
+
+  .info-container h3 {
+    font-size: 16px; /* Adjust font size for smaller screens */
+  }
+
+  .info-container p {
+    font-size: 14px; /* Adjust font size for smaller screens */
+  }
+
+  .info-container .hadith-section p {
+    font-size: 12px; /* Adjust font size for smaller screens */
+  }
+}
