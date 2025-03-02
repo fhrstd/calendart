@@ -93,72 +93,25 @@ if (!AFRAME.components['ios-alpha-video']) {
     });
 }
 
+// import another modules
+import { fetchHijriCalendar, displayHijriCalendar } from './hijriCalendar.js';
+import { getGregorianDate, displayGregorianCalendar } from './gregorianCalendar.js';
+import { fetchDailyHadith, displayDailyHadith } from './dailyHadith.js';
+
 async function fetchAnimations() {
-    const { data: animations, error } = await supabase
-        .from('animations')
-        .select('target_id, video_url, video_url_mov, name');
-
-    if (error) {
-        console.error("Error fetching data:", error);
-        return;
-    }
-
-    const assetsContainer = document.querySelector('#assets-container');
-    const entityContainer = document.querySelector('#entity-container');
-    
-    // For iOS workaround, we need to keep track of video loading
-    const videoPromises = [];
-
-    animations.forEach(item => {
-        // Create video asset
-        const videoAsset = document.createElement('video');
-        const videoId = item.name;
-        videoAsset.setAttribute('id', videoId);
-        
-        // Use the correct video source based on device
-        const videoSrc = isAppleDevice() ? item.video_url_mov : item.video_url;
-        videoAsset.setAttribute('src', videoSrc);
-        videoAsset.setAttribute('type', isAppleDevice() ? "video/mp4;codecs=hvc1" : "video/webm");
-        
-        // Set video attributes for proper playback
-        videoAsset.setAttribute('loop', 'true');
-        videoAsset.setAttribute('autoplay', 'true');
-        videoAsset.setAttribute('muted', 'true');
-        videoAsset.setAttribute('playsinline', 'true');
-        videoAsset.setAttribute('webkit-playsinline', 'true');
-        videoAsset.setAttribute('crossorigin', 'anonymous');
-        
-        // Additional color management attributes
-        if (isAppleDevice()) {
-            // Set color profile properties when supported
-            if ('colorSpaceUtilities' in window) {
-                videoAsset.setAttribute('colorspace', 'display-p3');
-            }
-        }
-        
-        videoAsset.style.backgroundColor = 'transparent';
-        
-        // Wait for video metadata to load
-        const videoLoaded = new Promise((resolve) => {
-            videoAsset.addEventListener('loadedmetadata', () => {
-                console.log(`Video ${videoId} metadata loaded (${videoAsset.videoWidth}x${videoAsset.videoHeight})`);
-                resolve();
-            });
-            
-            // Add fallback for video load failure
-            videoAsset.addEventListener('error', (e) => {
-                console.error(`Error loading video ${videoId}:`, e);
-                resolve(); // Resolve anyway to prevent blocking
-            });
-        });
-        
-        videoPromises.push(videoLoaded);
-        assetsContainer.appendChild(videoAsset);
-    });
 
     // Wait for all videos to be ready before creating entities
     await Promise.all(videoPromises);
     console.log("All videos loaded");
+
+    // Fetch and display Hijri and Gregorian dates
+    const hijriDate = await fetchHijriCalendar();
+    const gregorianDate = getGregorianDate();
+    const hadith = await fetchDailyHadith();
+
+    const hijriElement = displayHijriCalendar(hijriDate);
+    const gregorianElement = displayGregorianCalendar(gregorianDate);
+    const hadithElement = displayDailyHadith(hadith);
 
     animations.forEach((elm) => {
         const target = document.createElement('a-entity');
@@ -194,6 +147,11 @@ async function fetchAnimations() {
               </a-entity>
             `;
         }
+
+        // Append calendar and Hadith below the video
+        target.appendChild(hijriElement);
+        target.appendChild(gregorianElement);
+        target.appendChild(hadithElement);
 
         entityContainer.appendChild(target);
     });
