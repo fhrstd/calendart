@@ -48,7 +48,8 @@ export class ARExtensions {
       pointer-events: auto;
     `;
 
-    const calendarElement = this.calendarDisplay.createCalendarElement();
+    const calendarElement = this.extensionsContainer.querySelector('.ar-calendar');
+    if (calendarElement) calendarElement.style.display = 'block';
     const hadithElement = this.hadithDisplay.createHadithElement();
 
     this.extensionsContainer.appendChild(calendarElement);
