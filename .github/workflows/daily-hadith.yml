@@ -2,11 +2,11 @@ name: Daily Hadith Generator
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # This runs every day at midnight UTC
-  workflow_dispatch:     # This allows manual trigger via the Actions tab
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
-  generate-and-upload:
+  generate-and-commit:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,11 @@ jobs:
 
     - name: Run Generator
       run: npm start
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
+
+    - name: Commit and Push daily-hadith.json
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add daily-hadith.json
+        git commit -m "chore: update daily-hadith.json"
+        git push
