@@ -1,12 +1,13 @@
-// app.js
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { fetchHijriCalendar, displayHijriCalendar } from './hijriCalendar.js';
-import { getGregorianDate, displayGregorianCalendar } from './gregorianCalendar.js';
-import { fetchDailyHadith, displayDailyHadith } from './dailyHadith.js';
+// Initialize Supabase
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { ARExtensions } from './ar-extensions.js';
 
-const supabaseUrl = 'https://fdphjxbjnononpxljrgb.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkcGhqeGJqbm9ub25weGxqcmdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxOTM1MzMsImV4cCI6MjA1Mjc2OTUzM30.4OAWrb2IOvq0lOOPplBzG-hGYrK5BfP-y9sCR4ac3Vc';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = 'https://fdphjxbjnononpxljrgb.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkcGhqeGJqbm9ub25weGxqcmdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxOTM1MzMsImV4cCI6MjA1Mjc2OTUzM30.4OAWrb2IOvq0lOOPplBzG-hGYrK5BfP-y9sCR4ac3Vc'
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Create the AR extensions instance
+const arExtensions = new ARExtensions();
 
 // Detect devices
 function isAppleDevice() {
@@ -97,6 +98,27 @@ if (!AFRAME.components['ios-alpha-video']) {
     });
 }
 
+// Register AR target event components
+AFRAME.registerComponent('target-found-handler', {
+    init: function() {
+        this.el.addEventListener('targetFound', () => {
+            const targetIndex = this.el.getAttribute('mindar-image-target').targetIndex;
+            console.log(`Target found: ${targetIndex}`);
+            arExtensions.onTargetFound(targetIndex);
+        });
+    }
+});
+
+AFRAME.registerComponent('target-lost-handler', {
+    init: function() {
+        this.el.addEventListener('targetLost', () => {
+            const targetIndex = this.el.getAttribute('mindar-image-target').targetIndex;
+            console.log(`Target lost: ${targetIndex}`);
+            arExtensions.onTargetLost(targetIndex);
+        });
+    }
+});
+
 async function fetchAnimations() {
     const { data: animations, error } = await supabase
         .from('animations')
@@ -110,7 +132,7 @@ async function fetchAnimations() {
     const assetsContainer = document.querySelector('#assets-container');
     const entityContainer = document.querySelector('#entity-container');
     
-    // Declare and initialize videoPromises array
+    // For iOS workaround, we need to keep track of video loading
     const videoPromises = [];
 
     animations.forEach(item => {
@@ -164,22 +186,13 @@ async function fetchAnimations() {
     await Promise.all(videoPromises);
     console.log("All videos loaded");
 
-    // Fetch and display Hijri and Gregorian dates
-    const hijriDate = await fetchHijriCalendar();
-    const gregorianDate = getGregorianDate();
-    const hadith = await fetchDailyHadith();
-
-    const hijriElement = displayHijriCalendar(hijriDate);
-    const gregorianElement = displayGregorianCalendar(gregorianDate);
-    const hadithElement = displayDailyHadith(hadith);
-
     animations.forEach((elm) => {
         const target = document.createElement('a-entity');
         
         if (isAppleDevice()) {
             // For iOS devices, use our custom canvas-based approach
             target.innerHTML = `
-              <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
+              <a-entity mindar-image-target="targetIndex: ${elm.target_id}" target-found-handler target-lost-handler>
                 <a-plane
                   width="1" 
                   height="1.4"
@@ -191,7 +204,7 @@ async function fetchAnimations() {
         } else {
             // For non-iOS, use the transparent video shader
             target.innerHTML = `
-              <a-entity mindar-image-target="targetIndex: ${elm.target_id}">
+              <a-entity mindar-image-target="targetIndex: ${elm.target_id}" target-found-handler target-lost-handler>
                 <a-video
                   material="shader: transparent-video; src: #${elm.name}"
                   width="1" 
@@ -207,11 +220,6 @@ async function fetchAnimations() {
               </a-entity>
             `;
         }
-
-        // Append calendar and Hadith below the video
-        target.appendChild(hijriElement);
-        target.appendChild(gregorianElement);
-        target.appendChild(hadithElement);
 
         entityContainer.appendChild(target);
     });
@@ -244,7 +252,11 @@ function setupVideoPlayback() {
 }
 
 // Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize AR extensions first
+    await arExtensions.initialize();
+    
+    // Then fetch animations
     fetchAnimations();
     setupVideoPlayback();
     
