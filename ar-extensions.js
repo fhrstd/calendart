@@ -45,22 +45,25 @@ export class ARExtensions {
     
     // Create container entity for all extensions
     const containerEntity = document.createElement('a-entity');
-    containerEntity.setAttribute('position', '0 -1.5 0'); // Position below animation
+    // Position below animation - adjust these values as needed
+    containerEntity.setAttribute('position', '0 -0.8 0'); 
+    containerEntity.setAttribute('visible', 'true');
     
     // Create entities for calendar and hadith
     const calendarContent = this.calendarDisplay.getFormattedHijriDate() + 
                            "\n" + this.calendarDisplay.getFormattedGregorianDate();
     
-    // Calendar entity
+    // Calendar entity - make it more visible with adjusted size
     const calendarEntity = document.createElement('a-entity');
     calendarEntity.setAttribute('text', {
       value: calendarContent,
       align: 'center',
-      width: 1.5,
+      width: 2,
       color: 'white',
-      font: 'exo2bold'
+      font: 'exo2bold',
+      wrapCount: 30  // Control text wrapping
     });
-    calendarEntity.setAttribute('position', '0 0 0');
+    calendarEntity.setAttribute('position', '0 0 0.01'); // Slight offset to prevent z-fighting
     calendarEntity.setAttribute('geometry', {
       primitive: 'plane',
       width: 1,
@@ -68,9 +71,10 @@ export class ARExtensions {
     });
     calendarEntity.setAttribute('material', {
       color: '#000',
-      opacity: 0.7,
+      opacity: 0.8,
       transparent: true
     });
+    calendarEntity.setAttribute('init-text', '');
     
     // Format hadith text
     let hadithText = "";
@@ -85,59 +89,97 @@ export class ARExtensions {
       hadithText = "Loading hadith...";
     }
     
-    // Hadith entity
+    // Hadith entity - improve visibility and adjust size
     const hadithEntity = document.createElement('a-entity');
     hadithEntity.setAttribute('text', {
       value: hadithText,
       align: 'center',
-      width: 1.5,
+      width: 2,
       color: 'white',
-      font: 'exo2bold'
+      font: 'exo2bold',
+      wrapCount: 25  // Control text wrapping
     });
-    hadithEntity.setAttribute('position', '0 -0.5 0');
+    hadithEntity.setAttribute('position', '0 -0.5 0.01'); // Position below calendar
     hadithEntity.setAttribute('geometry', {
       primitive: 'plane',
       width: 1,
-      height: 0.6
+      height: 0.8  // Make it taller to fit more text
     });
     hadithEntity.setAttribute('material', {
       color: '#000',
-      opacity: 0.7,
+      opacity: 0.8,
       transparent: true
     });
+    hadithEntity.setAttribute('init-text', '');
+
+    // Make sure everything is visible
+    calendarEntity.setAttribute('visible', 'true');
+    hadithEntity.setAttribute('visible', 'true');
 
     // Add entities to container
     containerEntity.appendChild(calendarEntity);
     containerEntity.appendChild(hadithEntity);
     
-    // Add container to target
+    // Add container to target and ensure it's appended properly
     targetEntity.appendChild(containerEntity);
+    console.log("AR Extensions added to target", targetIndex);
     
     // Store reference to container
     this.arEntities[targetIndex] = containerEntity;
+    
+    // Debug the entity
+    setTimeout(() => this.debugAREntities(), 1000);
   }
 
   showAREntities(targetIndex) {
     if (this.arEntities[targetIndex]) {
       this.arEntities[targetIndex].setAttribute('visible', true);
+      console.log(`AR Extensions for target ${targetIndex} are now visible`);
     }
   }
 
   hideAREntities(targetIndex) {
     if (this.arEntities[targetIndex]) {
       this.arEntities[targetIndex].setAttribute('visible', false);
+      console.log(`AR Extensions for target ${targetIndex} are now hidden`);
     }
   }
 
   // Called when AR target is found
   onTargetFound(targetIndex) {
+    console.log(`Target found: ${targetIndex}, creating AR extensions`);
     this.visibleTargets.add(targetIndex);
     this.createAREntities(targetIndex);
   }
 
   // Called when AR target is lost
   onTargetLost(targetIndex) {
+    console.log(`Target lost: ${targetIndex}, hiding AR extensions`);
     this.visibleTargets.delete(targetIndex);
     this.hideAREntities(targetIndex);
+  }
+
+  // Debug function to help troubleshoot visibility issues
+  debugAREntities() {
+    console.log("Active AR entities:", Object.keys(this.arEntities));
+    console.log("Visible targets:", Array.from(this.visibleTargets));
+    
+    // Check if entities exist in the DOM
+    Object.keys(this.arEntities).forEach(index => {
+      const entity = this.arEntities[index];
+      console.log(`Entity ${index} visible:`, entity.getAttribute('visible'));
+      console.log(`Entity ${index} position:`, entity.getAttribute('position'));
+      
+      // Log children
+      const children = entity.children;
+      console.log(`Entity ${index} has ${children.length} children`);
+      
+      // Log child details
+      Array.from(children).forEach((child, i) => {
+        console.log(`Child ${i} type:`, child.tagName);
+        console.log(`Child ${i} visible:`, child.getAttribute('visible'));
+        console.log(`Child ${i} position:`, child.getAttribute('position'));
+      });
+    });
   }
 }
