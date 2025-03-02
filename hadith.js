@@ -4,7 +4,7 @@ export class HadithDisplay {
   constructor() {
     this.dailyHadith = null;
     this.currentLanguage = 'id'; // Default language - Indonesian
-    this.apiBaseUrl = 'https://api.hadith.gading.dev/';
+    this.apiBaseUrl = './daily-hadith.json';
   }
 
   async initialize() {
@@ -22,7 +22,7 @@ export class HadithDisplay {
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
     
     // Choose book randomly but consistently for the day
-    const books = ['bukhari', 'muslim', 'abu-dawud', 'tirmidzi', 'nasai', 'ibnu-majah'];
+    const books = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah'];
     const bookIndex = dayOfYear % books.length;
     const selectedBook = books[bookIndex];
     
