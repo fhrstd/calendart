@@ -13,24 +13,19 @@ export class ARExtensions {
 
   async initialize() {
     if (this.isInitialized) return;
-
-    console.log("Waiting for AR readiness before initializing extensions...");
-
-    const scene = document.querySelector('a-scene');
-    if (!scene) {
-      console.error("A-Frame scene not found. AR Extensions will not load.");
-      return;
-    }
-
-    scene.addEventListener('arReady', async () => {
-      console.log("MindAR ready - Initializing AR Extensions...");
-      await this.calendarDisplay.initialize();
-      await this.hadithDisplay.initialize();
-
-      this.createExtensionsContainer();
-      this.isInitialized = true;
-      console.log("AR Extensions initialized successfully after AR ready.");
-    }, { once: true });
+    
+    // Initialize each module
+    await Promise.all([
+      this.calendarDisplay.initialize(),
+      this.hadithDisplay.initialize()
+    ]);
+    
+    // Create container for extensions
+    this.createExtensionsContainer();
+    
+    // Set initialization flag
+    this.isInitialized = true;
+    console.log("AR Extensions initialized successfully");
   }
 
   createExtensionsContainer() {
