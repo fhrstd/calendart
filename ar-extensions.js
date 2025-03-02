@@ -11,7 +11,7 @@ export class ARExtensions {
     this.visibleTargets = new Set();
   }
 
-  aasync initialize() {
+  async initialize() {
     if (this.isInitialized) return;
 
     console.log("Waiting for AR readiness before initializing extensions...");
