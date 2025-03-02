@@ -1,8 +1,8 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseKey = 'your-supabase-anon-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+const supabaseUrl = 'https://fdphjxbjnononpxljrgb.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkcGhqeGJqbm9ub25weGxqcmdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxOTM1MzMsImV4cCI6MjA1Mjc2OTUzM30.4OAWrb2IOvq0lOOPplBzG-hGYrK5BfP-y9sCR4ac3Vc'
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Detect devices
 function isAppleDevice() {
@@ -225,54 +225,18 @@ function setupVideoPlayback() {
     scene.addEventListener('arReady', playVideos);
 }
 
-async function fetchDailyHadithFromSupabase() {
-    const response = await fetch('https://your-supabase-url.supabase.co/storage/v1/object/public/daily-hadith/daily-hadith.json');
-    if (!response.ok) {
-        console.error('Failed to fetch daily hadith');
-        return {
-            arabic: 'Gagal memuat hadits',
-            translation_id: 'Silakan coba lagi nanti.',
-            translation_en: 'Please try again later.',
-            source: ''
-        };
-    }
-    const data = await response.json();
-
-    const today = new Date();
-    const index = today.getDate() + today.getMonth() * 31;  // rotates daily
-    return data.hadith[index % data.hadith.length];
-}
-
-async function showDateAndHadithOverlay() {
-    const today = new Date();
-    const masehiDate = today.toLocaleDateString('en-GB');
-
-    const hijriDate = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    }).format(today);
-
-    const hadith = await fetchDailyHadithFromSupabase();
-
-    const overlay = document.getElementById('date-hadith-overlay');
-    overlay.innerHTML = `
-        <div style="font-weight:bold; margin-bottom:5px;">${hijriDate} - ${masehiDate}</div>
-        <div style="font-size:18px; margin-bottom:8px;">${hadith.arabic}</div>
-        <div style="font-size:14px;">🇮🇩 ${hadith.translation_id}</div>
-        <div style="font-size:14px;">🇬🇧 ${hadith.translation_en}</div>
-        <div style="font-size:12px; margin-top:5px; opacity:0.7;">${hadith.source}</div>
-    `;
-    overlay.style.display = 'block';
-}
-
-const scene = document.querySelector('a-scene');
-
-scene.addEventListener('mindar-start', () => {
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
     fetchAnimations();
     setupVideoPlayback();
-});
-
-scene.addEventListener('targetFound', () => {
-    showDateAndHadithOverlay();
+    
+    // Add listener for AR events for debugging
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('arReady', () => {
+        console.log("MindAR is ready");
+    });
+    
+    scene.addEventListener('arError', (event) => {
+        console.error("MindAR error:", event);
+    });
 });
