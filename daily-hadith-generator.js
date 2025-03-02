@@ -1,13 +1,10 @@
-
-// daily-hadith-generator.js
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables from GitHub Actions
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const STORAGE_BUCKET = process.env.STORAGE_BUCKET; // Example: 'ar-content'
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET;
 const FILE_PATH = 'daily-hadith.json';
 
 const books = ['bukhari', 'muslim', 'abu-dawud', 'tirmidzi', 'nasai', 'ibnu-majah'];
@@ -15,16 +12,26 @@ const TOTAL_HADITHS = 500;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+async function debugConnection() {
+    const test = await fetch('https://api.hadith.gading.dev/');
+    if (test.ok) {
+        console.log('✅ Successfully connected to Gading.dev');
+    } else {
+        console.error('❌ Failed to connect to Gading.dev:', test.status, test.statusText);
+    }
+}
+
 async function fetchHadith(book, number) {
+    console.log(`📚 Fetching ${book}, Hadith #${number}`);
     const url = `https://api.hadith.gading.dev/books/${book}/${number}`;
     const response = await fetch(url);
     if (!response.ok) {
-        console.error(`❌ Failed to fetch ${book} hadith ${number}`);
+        console.error(`❌ Failed to fetch ${book} hadith ${number}:`, response.status, response.statusText);
         return null;
     }
     const data = await response.json();
     if (!data.data || !data.data.contents) {
-        console.error(`❌ No valid data for ${book} hadith ${number}`);
+        console.error(`❌ Invalid data for ${book} hadith ${number}`);
         return null;
     }
     const hadith = data.data.contents;
@@ -50,15 +57,25 @@ function capitalize(str) {
 }
 
 async function generateDailyHadith() {
+    await debugConnection();
+
     const hadithList = [];
+    let bookIndex = 0;
+
     while (hadithList.length < TOTAL_HADITHS) {
-        const book = books[hadithList.length % books.length];
+        const book = books[bookIndex % books.length];
         const number = Math.floor(Math.random() * 300) + 1;
+
         const hadith = await fetchHadith(book, number);
-        if (hadith) hadithList.push(hadith);
+        bookIndex++;  // Always rotate book, even if fetch fails
+        if (hadith) {
+            hadithList.push(hadith);
+        }
     }
+
     fs.writeFileSync('daily-hadith.json', JSON.stringify(hadithList, null, 2), 'utf8');
     console.log(`✅ Successfully generated daily-hadith.json with ${hadithList.length} hadiths`);
+
     await uploadToSupabase('daily-hadith.json');
 }
 
