@@ -26,46 +26,59 @@ export class HadithDisplay {
     const bookIndex = dayOfYear % books.length;
     const selectedBook = books[bookIndex];
     
-    // Fetch total available hadiths in the book
-    const bookResponse = await fetch(`${this.apiBaseUrl}books/${selectedBook}`);
-    if (!bookResponse.ok) throw new Error(`Failed to fetch hadith book: ${selectedBook}`);
-    
-    const bookData = await bookResponse.json();
-    if (!bookData.data || !bookData.data.available) {
-      throw new Error('Invalid hadith book data');
-    }
-    
-    const totalHadiths = bookData.data.available;
-    // Generate a hadith number for today (1-based index)
-    const hadithNumber = (dayOfYear % totalHadiths) + 1;
-    
-    // Fetch the specific hadith
-    const hadithResponse = await fetch(`${this.apiBaseUrl}books/${selectedBook}/${hadithNumber}`);
-    if (!hadithResponse.ok) throw new Error('Failed to fetch hadith');
-    
-    const hadithData = await hadithResponse.json();
-    if (!hadithData.data) throw new Error('Invalid hadith data');
-    
-    this.dailyHadith = {
-      id: hadithData.data.number,
-      book: {
-        id: selectedBook,
-        name: bookData.data.name
-      },
-      text: {
-        arab: hadithData.data.arab,
-        id: hadithData.data.id,
-        en: '' // Default empty, will be translated
-      },
-      narrator: hadithData.data.narrator || '',
-      source: `${bookData.data.name}, No. ${hadithData.data.number}`
-    };
-    
-    // Try to get English translation if available
     try {
-      await this.fetchEnglishTranslation(selectedBook, hadithNumber);
+      // First, get the available hadiths count
+      const bookResponse = await fetch(`${this.apiBaseUrl}books/${selectedBook}`);
+      if (!bookResponse.ok) throw new Error(`Failed to fetch hadith book: ${selectedBook}`);
+      
+      const bookData = await bookResponse.json();
+      if (!bookData.data || !bookData.data.available) {
+        throw new Error('Invalid hadith book data');
+      }
+      
+      const totalHadiths = bookData.data.available;
+      
+      // Generate a hadith number for today (1-based index)
+      const hadithNumber = (dayOfYear % totalHadiths) + 1;
+      
+      // Fix: Using the correct API format with range parameter
+      // The API requires a range parameter instead of a specific number
+      const hadithResponse = await fetch(`${this.apiBaseUrl}books/${selectedBook}?range=${hadithNumber}-${hadithNumber}`);
+      
+      if (!hadithResponse.ok) throw new Error(`Failed to fetch hadith: ${hadithResponse.statusText}`);
+      
+      const hadithData = await hadithResponse.json();
+      if (!hadithData.data || !hadithData.data.hadiths || hadithData.data.hadiths.length === 0) {
+        throw new Error('Invalid hadith data or empty response');
+      }
+      
+      // Get the first (and only) hadith from the range
+      const hadith = hadithData.data.hadiths[0];
+      
+      this.dailyHadith = {
+        id: hadith.number,
+        book: {
+          id: selectedBook,
+          name: bookData.data.name
+        },
+        text: {
+          arab: hadith.arab,
+          id: hadith.id,
+          en: '' // Default empty, will be translated
+        },
+        narrator: hadith.narrator || '',
+        source: `${bookData.data.name}, No. ${hadith.number}`
+      };
+      
+      // Try to get English translation if available
+      try {
+        await this.fetchEnglishTranslation(selectedBook, hadithNumber);
+      } catch (error) {
+        console.warn("Couldn't fetch English translation:", error);
+      }
     } catch (error) {
-      console.warn("Couldn't fetch English translation:", error);
+      console.error("Error in fetchDailyHadith:", error);
+      throw error;
     }
   }
   
@@ -74,21 +87,34 @@ export class HadithDisplay {
     // For now, we'll use machine translation (in a real app, you would use a proper English hadith API)
     try {
       // Use an alternative API for English version if available
-      const enResponse = await fetch(`https://sunnah.com/api/v1/hadiths?book=${book}&number=${number}`);
+      const bookMapping = {
+        'bukhari': 'bukhari',
+        'muslim': 'muslim',
+        'abu-dawud': 'abudawud',
+        'tirmidzi': 'tirmidhi',
+        'nasai': 'nasai',
+        'ibnu-majah': 'ibnmajah'
+      };
+      
+      const mappedBook = bookMapping[book] || book;
+      
+      // Try to fetch from sunnah.com API (example, not guaranteed to work)
+      const enResponse = await fetch(`https://www.sunnah.com/ajax/${mappedBook}/${number}`);
+      
       if (enResponse.ok) {
         const enData = await enResponse.json();
-        if (enData && enData.data && enData.data.text) {
-          this.dailyHadith.text.en = enData.data.text;
+        if (enData && enData.hadith && enData.hadith.body) {
+          this.dailyHadith.text.en = enData.hadith.body;
           return;
         }
       }
       
-      // Fallback: generate simple English based on Indonesian
-      // In a real app, you'd use a proper translation API or database
-      this.dailyHadith.text.en = `[Translation not available]`;
+      // Fallback: simple transcription based on Indonesian
+      // Since this is a fallback, we'll just note that a translation isn't available
+      this.dailyHadith.text.en = `[English translation not available]`;
     } catch (error) {
       console.warn("Error getting English translation:", error);
-      this.dailyHadith.text.en = `[Translation not available]`;
+      this.dailyHadith.text.en = `[English translation not available]`;
     }
   }
 
@@ -113,73 +139,28 @@ export class HadithDisplay {
   createHadithElement() {
     const hadithDiv = document.createElement('div');
     hadithDiv.className = 'ar-hadith';
-    hadithDiv.style.cssText = `
-      padding: 15px;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
-      text-align: right;
-      font-family: Arial, sans-serif;
-      border-radius: 5px;
-      margin-top: 10px;
-      width: 100%;
-      max-height: 300px;
-      overflow-y: auto;
-      display: none;
-    `;
     
     // Create hadith elements if we have data
     if (this.dailyHadith) {
       const arabicText = document.createElement('div');
       arabicText.className = 'hadith-arabic';
-      arabicText.style.cssText = `
-        font-size: 18px;
-        line-height: 1.8;
-        margin-bottom: 15px;
-        direction: rtl;
-        font-family: 'Traditional Arabic', Arial, sans-serif;
-      `;
       arabicText.textContent = this.dailyHadith.text.arab;
       
       const idText = document.createElement('div');
       idText.className = 'hadith-id';
-      idText.style.cssText = `
-        font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 15px;
-        text-align: left;
-      `;
       idText.textContent = this.dailyHadith.text.id;
       
       const enText = document.createElement('div');
       enText.className = 'hadith-en';
-      enText.style.cssText = `
-        font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 15px;
-        text-align: left;
-        border-top: 1px solid rgba(255,255,255,0.2);
-        padding-top: 10px;
-      `;
       enText.textContent = this.dailyHadith.text.en;
       
       const sourceText = document.createElement('div');
       sourceText.className = 'hadith-source';
-      sourceText.style.cssText = `
-        font-size: 12px;
-        font-style: italic;
-        color: #ccc;
-        text-align: left;
-      `;
       sourceText.textContent = `Source: ${this.dailyHadith.source} | Narrator: ${this.dailyHadith.narrator}`;
       
       // Language selector
       const langSelector = document.createElement('div');
       langSelector.className = 'hadith-language-selector';
-      langSelector.style.cssText = `
-        font-size: 12px;
-        margin-top: 10px;
-        text-align: left;
-      `;
       
       const arabicButton = document.createElement('button');
       arabicButton.textContent = 'Arabic';
@@ -197,25 +178,12 @@ export class HadithDisplay {
       allButton.textContent = 'All';
       allButton.onclick = () => this.setLanguageDisplay('all', arabicText, idText, enText);
       
-      // Style buttons
-      [arabicButton, indonesianButton, englishButton, allButton].forEach(btn => {
-        btn.style.cssText = `
-          background-color: #444;
-          color: white;
-          border: none;
-          padding: 5px 10px;
-          margin: 0 5px 5px 0;
-          border-radius: 3px;
-          cursor: pointer;
-        `;
-      });
-      
+      // Add elements to container
       langSelector.appendChild(arabicButton);
       langSelector.appendChild(indonesianButton);
       langSelector.appendChild(englishButton);
       langSelector.appendChild(allButton);
       
-      // Add elements to container
       hadithDiv.appendChild(arabicText);
       hadithDiv.appendChild(idText);
       hadithDiv.appendChild(enText);
@@ -233,7 +201,7 @@ export class HadithDisplay {
     return hadithDiv;
   }
 
-setLanguageDisplay(language, arabicElement, idElement, enElement) {
+  setLanguageDisplay(language, arabicElement, idElement, enElement) {
     // Set visibility based on selected language
     switch (language) {
       case 'ar':
