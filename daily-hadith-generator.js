@@ -7,7 +7,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const STORAGE_BUCKET = process.env.STORAGE_BUCKET;
 const FILE_PATH = 'daily-hadith.json';
 
-const books = ['bukhari', 'muslim', 'abu-dawud', 'tirmidzi', 'nasai', 'ibnu-majah'];
+const books = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah'];
 const TOTAL_HADITHS = 500;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
