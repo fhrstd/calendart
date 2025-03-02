@@ -1,0 +1,14 @@
+{
+  "name": "daily-hadith-generator",
+  "version": "1.0.0",
+  "description": "Daily Hadith JSON Generator with Supabase Upload",
+  "type": "module",
+  "main": "daily-hadith-generator.js",
+  "scripts": {
+    "start": "node daily-hadith-generator.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "node-fetch": "^2.6.7"
+  }
+}
