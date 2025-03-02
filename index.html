@@ -10,13 +10,51 @@
   <script src="https://unpkg.com/aframe-transparent-video-shader-corrected@1.0.0/dist/transparent-video-shader.js"></script>
    
   <!-- Your App Logic -->
+  <script type="module" src="calendar.js"></script>
+  <script type="module" src="hadith.js"></script>
+  <script type="module" src="ar-extensions.js"></script>
   <script type="module" src="app.js"></script>
-  <script type="module" src="hijriCalendar.js"></script>
-  <script type="module" src="gregorianCalendar.js"></script>
-  <script type="module" src="dailyHadith.js"></script>
-
-  <!-- Link to the external CSS file -->
-  <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { margin: 0; overflow: hidden; }
+    a-video, video { background-color: transparent !important; }
+    a-plane { background-color: transparent !important; }
+    
+    /* Hide video elements */
+    #assets-container video {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      visibility: hidden;
+    }
+    
+    /* Styles for calendar and hadith display */
+    .ar-extensions-container {
+      font-family: Arial, sans-serif;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Button styles */
+    .ar-extensions-container button {
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      margin: 0 5px 5px 0;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    .ar-extensions-container button:hover {
+      background-color: #666;
+    }
+  </style>
 </head>
 
 <body>
