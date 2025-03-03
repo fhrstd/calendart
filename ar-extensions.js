@@ -9,6 +9,7 @@ export class ARExtensions {
     this.extensionsContainer = null;
     this.isInitialized = false;
     this.visibleTargets = new Set();
+    this.animationApplied = false; // Flag to track if animation has been applied
   }
 
   async initialize() {
@@ -32,17 +33,9 @@ export class ARExtensions {
     // Create a container to hold all extension content
     this.extensionsContainer = document.createElement('div');
     this.extensionsContainer.className = 'ar-extensions-container';
-    this.extensionsContainer.style.cssText = `
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 15px;
-      display: none;
-      flex-direction: column;
-      z-index: 1000;
-      pointer-events: auto;
-    `;
+    
+    // Remove inline styles and rely on CSS file
+    // This ensures CSS animations work on first load
     
     // Add calendar and hadith elements
     const calendarElement = this.calendarDisplay.createCalendarElement();
@@ -58,8 +51,18 @@ export class ARExtensions {
   showExtensions() {
     if (!this.extensionsContainer) return;
     
-    // Show the container
+    // Show the container first
     this.extensionsContainer.style.display = 'flex';
+    
+    // Apply animation in the next frame to ensure it runs
+    // This fixes the animation not showing on first load
+    requestAnimationFrame(() => {
+      // Add the animation class after a small delay
+      setTimeout(() => {
+        this.extensionsContainer.classList.add('show-animation');
+        this.animationApplied = true;
+      }, 10);
+    });
     
     // Show individual elements
     const calendarElement = this.extensionsContainer.querySelector('.ar-calendar');
@@ -71,7 +74,14 @@ export class ARExtensions {
 
   hideExtensions() {
     if (!this.extensionsContainer) return;
-    this.extensionsContainer.style.display = 'none';
+    
+    // Remove animation class first
+    this.extensionsContainer.classList.remove('show-animation');
+    
+    // Hide with a slight delay to allow animation to complete
+    setTimeout(() => {
+      this.extensionsContainer.style.display = 'none';
+    }, 500); // Match the animation duration in CSS
   }
 
   // Called when AR target is found
