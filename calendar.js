@@ -87,15 +87,34 @@ export class CalendarDisplay {
   getFormattedHijriDate() {
     if (!this.hijriDate) return "Loading Hijri date...";
     
-    // Make Hijri date more prominent
     return `${this.hijriDate.day} ${this.hijriDate.month.en} ${this.hijriDate.year} H`;
   }
   
-  // For compatibility with existing code but not used in AR version
   createCalendarElement() {
     const calendarDiv = document.createElement('div');
     calendarDiv.className = 'ar-calendar';
-    calendarDiv.setAttribute('style', 'display: none;');
+    calendarDiv.style.cssText = `
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+      margin-top: 10px;
+      width: 100%;
+      display: none;
+    `;
+    
+    const gregorianElement = document.createElement('div');
+    gregorianElement.className = 'gregorian-date';
+    gregorianElement.textContent = this.getFormattedGregorianDate();
+    
+    const hijriElement = document.createElement('div');
+    hijriElement.className = 'hijri-date';
+    hijriElement.textContent = this.getFormattedHijriDate();
+    
+    calendarDiv.appendChild(gregorianElement);
+    calendarDiv.appendChild(hijriElement);
     
     return calendarDiv;
   }
