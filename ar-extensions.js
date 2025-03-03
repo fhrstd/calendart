@@ -21,8 +21,6 @@ export class ARExtensions {
       this.hadithDisplay.initialize()
     ]);
     
-    // We'll create AR entities later when targets are found
-    
     // Set initialization flag
     this.isInitialized = true;
     console.log("AR Extensions initialized successfully");
@@ -43,43 +41,45 @@ export class ARExtensions {
       return;
     }
     
-    // Create container entity for all extensions
+    // Create container entity for all extensions - Positioned below the marker
     const containerEntity = document.createElement('a-entity');
-    // Position below animation - adjust these values as needed
-    containerEntity.setAttribute('position', '0 -0.8 0'); 
+    containerEntity.setAttribute('position', '0 -0.9 0'); 
+    containerEntity.setAttribute('scale', '0.8 0.8 0.8'); // Scale down to fit better
     containerEntity.setAttribute('visible', 'true');
     
-    // Create entities for calendar and hadith
+    // Get formatted calendar content
     const calendarContent = this.calendarDisplay.getFormattedHijriDate() + 
                            "\n" + this.calendarDisplay.getFormattedGregorianDate();
     
-    // Calendar entity - make it more visible with adjusted size
+    // Calendar entity with improved visibility
     const calendarEntity = document.createElement('a-entity');
     calendarEntity.setAttribute('text', {
       value: calendarContent,
       align: 'center',
-      width: 2,
-      color: 'white',
+      width: 1.2, // Wider text area
+      height: 0.5, // Taller text area
+      color: '#FFFFFF', // Bright white for visibility
       font: 'exo2bold',
-      wrapCount: 30  // Control text wrapping
+      wrapCount: 20, // Fewer characters per line for better readability
+      baseline: 'top' // Align text from top
     });
-    calendarEntity.setAttribute('position', '0 0 0.01'); // Slight offset to prevent z-fighting
+    calendarEntity.setAttribute('position', '0 0 0.01');
     calendarEntity.setAttribute('geometry', {
       primitive: 'plane',
       width: 1,
-      height: 0.3
+      height: 0.25
     });
     calendarEntity.setAttribute('material', {
-      color: '#000',
+      color: '#000000',
       opacity: 0.8,
       transparent: true
     });
     calendarEntity.setAttribute('init-text', '');
     
-    // Format hadith text
+    // Format hadith text with proper spacing
     let hadithText = "";
     if (this.hadithDisplay.dailyHadith) {
-      // Add Arabic text
+      // Add Arabic text with proper spacing
       hadithText += this.hadithDisplay.dailyHadith.text.arab + "\n\n";
       // Add Indonesian text
       hadithText += this.hadithDisplay.dailyHadith.text.id + "\n\n";
@@ -89,24 +89,25 @@ export class ARExtensions {
       hadithText = "Loading hadith...";
     }
     
-    // Hadith entity - improve visibility and adjust size
+    // Hadith entity with improved positioning and sizing
     const hadithEntity = document.createElement('a-entity');
     hadithEntity.setAttribute('text', {
       value: hadithText,
       align: 'center',
-      width: 2,
-      color: 'white',
+      width: 1.2, // Match calendar width
+      color: '#FFFFFF',
       font: 'exo2bold',
-      wrapCount: 25  // Control text wrapping
+      wrapCount: 20, // Fewer characters per line for readability
+      baseline: 'top' // Align text from top
     });
-    hadithEntity.setAttribute('position', '0 -0.5 0.01'); // Position below calendar
+    hadithEntity.setAttribute('position', '0 -0.35 0.01'); // Positioned closer to calendar
     hadithEntity.setAttribute('geometry', {
       primitive: 'plane',
       width: 1,
-      height: 0.8  // Make it taller to fit more text
+      height: 0.6 // Taller to fit more text
     });
     hadithEntity.setAttribute('material', {
-      color: '#000',
+      color: '#000000',
       opacity: 0.8,
       transparent: true
     });
@@ -169,6 +170,7 @@ export class ARExtensions {
       const entity = this.arEntities[index];
       console.log(`Entity ${index} visible:`, entity.getAttribute('visible'));
       console.log(`Entity ${index} position:`, entity.getAttribute('position'));
+      console.log(`Entity ${index} scale:`, entity.getAttribute('scale'));
       
       // Log children
       const children = entity.children;
@@ -179,6 +181,13 @@ export class ARExtensions {
         console.log(`Child ${i} type:`, child.tagName);
         console.log(`Child ${i} visible:`, child.getAttribute('visible'));
         console.log(`Child ${i} position:`, child.getAttribute('position'));
+        
+        // For text entities, log text attributes
+        if (child.getAttribute('text')) {
+          console.log(`Child ${i} text:`, child.getAttribute('text').value.substring(0, 30) + "...");
+          console.log(`Child ${i} text width:`, child.getAttribute('text').width);
+          console.log(`Child ${i} text wrapCount:`, child.getAttribute('text').wrapCount);
+        }
       });
     });
   }
