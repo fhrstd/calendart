@@ -48,13 +48,20 @@ export class CalendarDisplay {
     const hijriMonth = Math.floor(hijriDaysSinceBase / 29.5) + 1;
     const hijriDay = Math.floor(hijriDaysSinceBase % 29.5) + 1;
     
+    // Calculate weekday (0-6, where 0 is Sunday in Gregorian)
+    // Need to convert to Islamic weekday where 1 is Sunday
+    const gregorianWeekday = this.gregorianDate.getDay();
+    
     this.hijriDate = {
       year: baseHijri.year + hijriYearsSinceBase,
       month: {
         number: hijriMonth,
         en: this.getHijriMonthName(hijriMonth)
       },
-      day: hijriDay.toString()
+      day: hijriDay.toString(),
+      weekday: {
+        en: this.getIslamicDayName(gregorianWeekday)
+      }
     };
   }
   
@@ -65,6 +72,21 @@ export class CalendarDisplay {
       "Ramadan", "Shawwal", "Dhul Qa'dah", "Dhul Hijjah"
     ];
     return months[monthNumber - 1];
+  }
+  
+  getIslamicDayName(gregorianWeekday) {
+    // Islamic days start with Sunday as the first day
+    // Convert from Gregorian weekday (0=Sunday) to Islamic day name
+    const islamicDays = [
+      "Ahad", // Sunday (يوم الأحد)
+      "Ithnayn", // Monday (يوم الإثنين)
+      "Thulaathaa", // Tuesday (يوم الثلاثاء)
+      "Arba'aa", // Wednesday (يوم الأربعاء)
+      "Khamees", // Thursday (يوم الخميس)
+      "Jumu'ah", // Friday (يوم الجمعة)
+      "Sabt" // Saturday (يوم السبت)
+    ];
+    return islamicDays[gregorianWeekday];
   }
   
   formatGregorianDate() {
@@ -87,7 +109,19 @@ export class CalendarDisplay {
   getFormattedHijriDate() {
     if (!this.hijriDate) return "Loading Hijri date...";
     
-    return `${this.hijriDate.day} ${this.hijriDate.month.en} ${this.hijriDate.year} H`;
+    // For API-fetched data, this.hijriDate.weekday.en contains the day name
+    // For fallback calculation, we need to generate it
+    let islamicDayName = "";
+    
+    if (this.hijriDate.weekday && this.hijriDate.weekday.en) {
+      // Use API-provided weekday if available
+      islamicDayName = this.hijriDate.weekday.en;
+    } else {
+      // Calculate based on Gregorian date
+      islamicDayName = this.getIslamicDayName(this.gregorianDate.getDay());
+    }
+    
+    return `${islamicDayName}, ${this.hijriDate.day} ${this.hijriDate.month.en} ${this.hijriDate.year} H`;
   }
   
   createCalendarElement() {
@@ -113,8 +147,8 @@ export class CalendarDisplay {
     hijriElement.className = 'hijri-date';
     hijriElement.textContent = this.getFormattedHijriDate();
     
-    calendarDiv.appendChild(gregorianElement);
     calendarDiv.appendChild(hijriElement);
+    calendarDiv.appendChild(gregorianElement);
     
     return calendarDiv;
   }
