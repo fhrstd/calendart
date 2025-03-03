@@ -15,20 +15,6 @@ function isAppleDevice() {
            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-// Register the text initialization component
-AFRAME.registerComponent('init-text', {
-    init: function() {
-        // Force text component to regenerate
-        if (this.el.getAttribute('text')) {
-            const textData = this.el.getAttribute('text');
-            setTimeout(() => {
-                this.el.setAttribute('text', textData);
-                console.log("Text component initialized:", textData.value.substring(0, 20) + "...");
-            }, 100);
-        }
-    }
-});
-
 // Register the custom shader component for iOS alpha videos
 if (!AFRAME.components['ios-alpha-video']) {
     AFRAME.registerComponent('ios-alpha-video', {
@@ -182,11 +168,6 @@ async function fetchAnimations() {
         const videoLoaded = new Promise((resolve) => {
             videoAsset.addEventListener('loadedmetadata', () => {
                 console.log(`Video ${videoId} metadata loaded (${videoAsset.videoWidth}x${videoAsset.videoHeight})`);
-                console.log(`Video duration: ${videoAsset.duration}s`);
-                // Check if video is actually playing after a short delay
-                setTimeout(() => {
-                    console.log(`Video ${videoId} playing:`, !videoAsset.paused);
-                }, 2000);
                 resolve();
             });
             
@@ -249,13 +230,6 @@ async function fetchAnimations() {
     document.querySelectorAll('video').forEach(video => {
         video.play().catch(e => console.error("Video play error:", e));
     });
-    
-    // Debug AR entities after a delay to ensure everything is initialized
-    setTimeout(() => {
-        arExtensions.debugAREntities();
-    }, 5000); // 5 seconds delay
-
-    return true;
 }
 
 // Add a listener to force video playback when user interacts
@@ -279,29 +253,20 @@ function setupVideoPlayback() {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log("DOM loaded, initializing AR application");
-        
-        // Initialize AR extensions first
-        await arExtensions.initialize();
-        console.log("AR Extensions initialized");
-        
-        // Then fetch animations
-        const result = await fetchAnimations();
-        console.log("Animations fetched:", result);
-        
-        setupVideoPlayback();
-        
-        // Add listener for AR events for debugging
-        const scene = document.querySelector('a-scene');
-        scene.addEventListener('arReady', () => {
-            console.log("MindAR is ready");
-        });
-        
-        scene.addEventListener('arError', (event) => {
-            console.error("MindAR error:", event);
-        });
-    } catch (error) {
-        console.error("Error initializing application:", error);
-    }
+    // Initialize AR extensions first
+    await arExtensions.initialize();
+    
+    // Then fetch animations
+    fetchAnimations();
+    setupVideoPlayback();
+    
+    // Add listener for AR events for debugging
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('arReady', () => {
+        console.log("MindAR is ready");
+    });
+    
+    scene.addEventListener('arError', (event) => {
+        console.error("MindAR error:", event);
+    });
 });
