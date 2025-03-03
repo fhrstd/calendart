@@ -144,9 +144,9 @@ export class HadithDisplay {
         flex-wrap: wrap;
       `;
       
-      const arabicButton = document.createElement('button');
+      /*const arabicButton = document.createElement('button');
       arabicButton.textContent = 'Arabic';
-      arabicButton.onclick = () => this.setLanguageDisplay('ar', arabicText, idText, enText);
+      arabicButton.onclick = () => this.setLanguageDisplay('ar', arabicText, idText, enText);*/
       
       const indonesianButton = document.createElement('button');
       indonesianButton.textContent = 'Indonesian';
@@ -156,9 +156,9 @@ export class HadithDisplay {
       englishButton.textContent = 'English';
       englishButton.onclick = () => this.setLanguageDisplay('en', arabicText, idText, enText);
       
-      const allButton = document.createElement('button');
+      /*const allButton = document.createElement('button');
       allButton.textContent = 'All';
-      allButton.onclick = () => this.setLanguageDisplay('all', arabicText, idText, enText);
+      allButton.onclick = () => this.setLanguageDisplay('all', arabicText, idText, enText);*/
       
       // Add elements to container
       langSelector.appendChild(arabicButton);
