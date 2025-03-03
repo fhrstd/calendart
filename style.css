@@ -84,17 +84,17 @@ a-plane {
 
 /* Gregorian date display */
 .gregorian-date {
-  font-size: 16px;           /* Text size - adjust as needed */
-  margin-bottom: 5px;        /* Space below - adjust or remove */
-  font-weight: normal;       /* Text weight - options: normal, bold */
-  /* color: #f0f0f0; */      /* Uncomment to override calendar text color */
+  font-size: 14px;           /* Text size - generally smaller than Gregorian */
+  font-weight: normal;       /* Text weight */
+  /* color: #cccccc; */      /* Uncomment for slightly dimmer text than Hijri */
 }
 
 /* Hijri date display */
 .hijri-date {
-  font-size: 14px;           /* Text size - generally smaller than Gregorian */
-  font-weight: normal;       /* Text weight */
-  /* color: #cccccc; */      /* Uncomment for slightly dimmer text than Gregorian */
+  font-size: 16px;           /* Text size - adjust as needed */
+  margin-bottom: 5px;        /* Space below - adjust or remove */
+  font-weight: normal;       /* Text weight - options: normal, bold */
+  /* color: #f0f0f0; */      /* Uncomment to override calendar text color */
 }
 
 /* ==========================================================================
