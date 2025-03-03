@@ -57,7 +57,6 @@ export class ARExtensions {
       value: calendarContent,
       align: 'center',
       width: 1.2, // Wider text area
-      height: 0.5, // Taller text area
       color: '#FFFFFF', // Bright white for visibility
       font: 'exo2bold',
       wrapCount: 20, // Fewer characters per line for better readability
@@ -76,50 +75,101 @@ export class ARExtensions {
     });
     calendarEntity.setAttribute('init-text', '');
     
-    // Format hadith text with proper spacing
-    let hadithText = "";
-    if (this.hadithDisplay.dailyHadith) {
-      // Add Arabic text with proper spacing
-      hadithText += this.hadithDisplay.dailyHadith.text.arab + "\n\n";
-      // Add Indonesian text
-      hadithText += this.hadithDisplay.dailyHadith.text.id + "\n\n";
-      // Add source
-      hadithText += "Source: " + this.hadithDisplay.dailyHadith.source;
+    // Create separate entities for Arabic and Indonesian text
+    // This helps ensure proper rendering of Arabic text
+    const arabicTextEntity = document.createElement('a-entity');
+    const idTextEntity = document.createElement('a-entity');
+    const sourceTextEntity = document.createElement('a-entity');
+    
+    // Arabic hadith text
+    let arabicText = "";
+    if (this.hadithDisplay.dailyHadith && this.hadithDisplay.dailyHadith.text.arab) {
+      arabicText = this.hadithDisplay.dailyHadith.text.arab;
     } else {
-      hadithText = "Loading hadith...";
+      arabicText = "جاري تحميل الحديث..."; // "Loading hadith..." in Arabic
     }
     
-    // Hadith entity with improved positioning and sizing
-    const hadithEntity = document.createElement('a-entity');
-    hadithEntity.setAttribute('text', {
-      value: hadithText,
+    // Indonesian hadith text
+    let idText = "";
+    if (this.hadithDisplay.dailyHadith && this.hadithDisplay.dailyHadith.text.id) {
+      idText = this.hadithDisplay.dailyHadith.text.id;
+    } else {
+      idText = "Loading hadith...";
+    }
+    
+    // Source text
+    let sourceText = "";
+    if (this.hadithDisplay.dailyHadith && this.hadithDisplay.dailyHadith.source) {
+      sourceText = "Source: " + this.hadithDisplay.dailyHadith.source;
+    }
+    
+    // Configure Arabic text entity with right-to-left support
+    arabicTextEntity.setAttribute('text', {
+      value: arabicText,
+      align: 'right', // Right alignment for Arabic
+      width: 1.2,
+      color: '#FFFFFF',
+      font: 'exo2bold', // A-Frame has limited font options
+      wrapCount: 15, // Fewer characters per line for Arabic
+      baseline: 'top',
+      direction: 'rtl' // Right-to-left direction for Arabic
+    });
+    arabicTextEntity.setAttribute('position', '0 -0.35 0.01');
+    arabicTextEntity.setAttribute('init-text', '');
+    
+    // Configure Indonesian text entity
+    idTextEntity.setAttribute('text', {
+      value: idText,
       align: 'center',
-      width: 1.2, // Match calendar width
+      width: 1.2,
       color: '#FFFFFF',
       font: 'exo2bold',
-      wrapCount: 20, // Fewer characters per line for readability
-      baseline: 'top' // Align text from top
+      wrapCount: 20,
+      baseline: 'top'
     });
-    hadithEntity.setAttribute('position', '0 -0.35 0.01'); // Positioned closer to calendar
-    hadithEntity.setAttribute('geometry', {
+    idTextEntity.setAttribute('position', '0 -0.55 0.01'); // Position below Arabic text
+    idTextEntity.setAttribute('init-text', '');
+    
+    // Configure source text entity
+    sourceTextEntity.setAttribute('text', {
+      value: sourceText,
+      align: 'center',
+      width: 1.2,
+      color: '#CCCCCC', // Slightly dimmer color for source
+      font: 'exo2bold',
+      wrapCount: 25,
+      baseline: 'top'
+    });
+    sourceTextEntity.setAttribute('position', '0 -0.75 0.01'); // Position below Indonesian text
+    sourceTextEntity.setAttribute('init-text', '');
+    
+    // Create background plane for hadith text
+    const hadithBackgroundEntity = document.createElement('a-entity');
+    hadithBackgroundEntity.setAttribute('geometry', {
       primitive: 'plane',
       width: 1,
-      height: 0.6 // Taller to fit more text
+      height: 0.6 // Tall enough to fit all text
     });
-    hadithEntity.setAttribute('material', {
+    hadithBackgroundEntity.setAttribute('material', {
       color: '#000000',
       opacity: 0.8,
       transparent: true
     });
-    hadithEntity.setAttribute('init-text', '');
-
+    hadithBackgroundEntity.setAttribute('position', '0 -0.55 0'); // Position to cover all text entities
+    
     // Make sure everything is visible
     calendarEntity.setAttribute('visible', 'true');
-    hadithEntity.setAttribute('visible', 'true');
+    arabicTextEntity.setAttribute('visible', 'true');
+    idTextEntity.setAttribute('visible', 'true');
+    sourceTextEntity.setAttribute('visible', 'true');
+    hadithBackgroundEntity.setAttribute('visible', 'true');
 
     // Add entities to container
     containerEntity.appendChild(calendarEntity);
-    containerEntity.appendChild(hadithEntity);
+    containerEntity.appendChild(hadithBackgroundEntity);
+    containerEntity.appendChild(arabicTextEntity);
+    containerEntity.appendChild(idTextEntity);
+    containerEntity.appendChild(sourceTextEntity);
     
     // Add container to target and ensure it's appended properly
     targetEntity.appendChild(containerEntity);
@@ -130,6 +180,9 @@ export class ARExtensions {
     
     // Debug the entity
     setTimeout(() => this.debugAREntities(), 1000);
+    
+    // Log Arabic text for debugging
+    console.log("Arabic text being displayed:", arabicText);
   }
 
   showAREntities(targetIndex) {
@@ -184,9 +237,10 @@ export class ARExtensions {
         
         // For text entities, log text attributes
         if (child.getAttribute('text')) {
-          console.log(`Child ${i} text:`, child.getAttribute('text').value.substring(0, 30) + "...");
-          console.log(`Child ${i} text width:`, child.getAttribute('text').width);
-          console.log(`Child ${i} text wrapCount:`, child.getAttribute('text').wrapCount);
+          const textAttr = child.getAttribute('text');
+          console.log(`Child ${i} text:`, textAttr.value?.substring(0, 30) + "...");
+          console.log(`Child ${i} text align:`, textAttr.align);
+          console.log(`Child ${i} text direction:`, textAttr.direction);
         }
       });
     });
