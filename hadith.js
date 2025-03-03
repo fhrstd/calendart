@@ -186,27 +186,27 @@ export class HadithDisplay {
   setLanguageDisplay(language, arabicElement, idElement, enElement) {
     // Set visibility based on selected language
     switch (language) {
-      case 'ar':
+      /*case 'ar':
         arabicElement.style.display = 'block';
         idElement.style.display = 'none';
         enElement.style.display = 'none';
-        break;
+        break;*/
       case 'id':
-        arabicElement.style.display = 'none';
+        arabicElement.style.display = 'block';
         idElement.style.display = 'block';
         enElement.style.display = 'none';
         break;
       case 'en':
-        arabicElement.style.display = 'none';
+        default:
+        arabicElement.style.display = 'block';
         idElement.style.display = 'none';
         enElement.style.display = 'block';
         break;
-      case 'all':
-      default:
+      /*case 'all':
         arabicElement.style.display = 'block';
         idElement.style.display = 'block';
         enElement.style.display = 'block';
-        break;
+        break;*/
     }
     
     this.currentLanguage = language;
