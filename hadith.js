@@ -51,7 +51,8 @@ export class HadithDisplay {
         },
         text: {
           arab: selectedHadith.text.arab,
-          id: selectedHadith.text.id
+          id: selectedHadith.text.id,
+          en: selectedHadith.text.en || '[English translation not available]'
         },
         narrator: selectedHadith.narrator || '',
         source: selectedHadith.source
@@ -74,19 +75,140 @@ export class HadithDisplay {
       },
       text: {
         arab: 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى',
-        id: 'Sesungguhnya setiap amalan tergantung pada niatnya. Dan sesungguhnya setiap orang akan mendapatkan sesuai dengan yang diniatkannya.'
+        id: 'Sesungguhnya setiap amalan tergantung pada niatnya. Dan sesungguhnya setiap orang akan mendapatkan sesuai dengan yang diniatkannya.',
+        en: 'The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended.'
       },
       narrator: 'Umar bin Al-Khattab',
       source: 'Sahih Bukhari, No. 1'
     };
   }
 
-  // For compatibility with existing code but not used in AR version
   createHadithElement() {
     const hadithDiv = document.createElement('div');
     hadithDiv.className = 'ar-hadith';
-    hadithDiv.setAttribute('style', 'display: none;');
+    hadithDiv.style.cssText = `
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+      margin-top: 10px;
+      width: 100%;
+      display: none;
+    `;
+    
+    // Create hadith elements if we have data
+    if (this.dailyHadith) {
+      const arabicText = document.createElement('div');
+      arabicText.className = 'hadith-arabic';
+      arabicText.textContent = this.dailyHadith.text.arab;
+      arabicText.style.cssText = `
+        font-size: 18px;
+        direction: rtl;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      `;
+      
+      const idText = document.createElement('div');
+      idText.className = 'hadith-id';
+      idText.textContent = this.dailyHadith.text.id;
+      idText.style.cssText = `
+        font-size: 16px;
+        margin-bottom: 10px;
+      `;
+      
+      const enText = document.createElement('div');
+      enText.className = 'hadith-en';
+      enText.textContent = this.dailyHadith.text.en;
+      enText.style.cssText = `
+        font-size: 16px;
+        margin-bottom: 10px;
+      `;
+      
+      const sourceText = document.createElement('div');
+      sourceText.className = 'hadith-source';
+      sourceText.textContent = `Source: ${this.dailyHadith.source} | Narrator: ${this.dailyHadith.narrator}`;
+      sourceText.style.cssText = `
+        font-size: 14px;
+        font-style: italic;
+        margin-bottom: 10px;
+      `;
+      
+      // Language selector
+      const langSelector = document.createElement('div');
+      langSelector.className = 'hadith-language-selector';
+      langSelector.style.cssText = `
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+      `;
+      
+      const arabicButton = document.createElement('button');
+      arabicButton.textContent = 'Arabic';
+      arabicButton.onclick = () => this.setLanguageDisplay('ar', arabicText, idText, enText);
+      
+      const indonesianButton = document.createElement('button');
+      indonesianButton.textContent = 'Indonesian';
+      indonesianButton.onclick = () => this.setLanguageDisplay('id', arabicText, idText, enText);
+      
+      const englishButton = document.createElement('button');
+      englishButton.textContent = 'English';
+      englishButton.onclick = () => this.setLanguageDisplay('en', arabicText, idText, enText);
+      
+      const allButton = document.createElement('button');
+      allButton.textContent = 'All';
+      allButton.onclick = () => this.setLanguageDisplay('all', arabicText, idText, enText);
+      
+      // Add elements to container
+      langSelector.appendChild(arabicButton);
+      langSelector.appendChild(indonesianButton);
+      langSelector.appendChild(englishButton);
+      langSelector.appendChild(allButton);
+      
+      hadithDiv.appendChild(arabicText);
+      hadithDiv.appendChild(idText);
+      hadithDiv.appendChild(enText);
+      hadithDiv.appendChild(sourceText);
+      hadithDiv.appendChild(langSelector);
+      
+      // Set default language display
+      this.setLanguageDisplay('all', arabicText, idText, enText);
+    } else {
+      const loadingText = document.createElement('div');
+      loadingText.textContent = 'Loading hadith...';
+      hadithDiv.appendChild(loadingText);
+    }
     
     return hadithDiv;
+  }
+
+  setLanguageDisplay(language, arabicElement, idElement, enElement) {
+    // Set visibility based on selected language
+    switch (language) {
+      case 'ar':
+        arabicElement.style.display = 'block';
+        idElement.style.display = 'none';
+        enElement.style.display = 'none';
+        break;
+      case 'id':
+        arabicElement.style.display = 'none';
+        idElement.style.display = 'block';
+        enElement.style.display = 'none';
+        break;
+      case 'en':
+        arabicElement.style.display = 'none';
+        idElement.style.display = 'none';
+        enElement.style.display = 'block';
+        break;
+      case 'all':
+      default:
+        arabicElement.style.display = 'block';
+        idElement.style.display = 'block';
+        enElement.style.display = 'block';
+        break;
+    }
+    
+    this.currentLanguage = language;
   }
 }
