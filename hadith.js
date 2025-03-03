@@ -161,10 +161,10 @@ export class HadithDisplay {
       allButton.onclick = () => this.setLanguageDisplay('all', arabicText, idText, enText);*/
       
       // Add elements to container
-      langSelector.appendChild(arabicButton);
+      //langSelector.appendChild(arabicButton);
       langSelector.appendChild(indonesianButton);
       langSelector.appendChild(englishButton);
-      langSelector.appendChild(allButton);
+      //langSelector.appendChild(allButton);
       
       hadithDiv.appendChild(arabicText);
       hadithDiv.appendChild(idText);
