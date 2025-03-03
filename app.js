@@ -16,6 +16,7 @@ function isAppleDevice() {
 }
 
 // Register the custom shader component for iOS alpha videos
+// Register the custom shader component for iOS alpha videos
 if (!AFRAME.components['ios-alpha-video']) {
     AFRAME.registerComponent('ios-alpha-video', {
         schema: {
@@ -33,6 +34,12 @@ if (!AFRAME.components['ios-alpha-video']) {
                 return;
             }
             
+            // Make sure THREE is available
+            if (typeof THREE === 'undefined') {
+                console.error('THREE.js not loaded yet');
+                return;
+            }
+            
             // Create a new canvas element with proper color settings
             const canvas = document.createElement('canvas');
             canvas.width = 1024;  // Set appropriate size
@@ -43,47 +50,16 @@ if (!AFRAME.components['ios-alpha-video']) {
                 willReadFrequently: true
             });
             
-            // Apply color correction settings to context
-            if (ctx.filter !== undefined) {
-                // Use slight color enhancement if filters are supported
-                ctx.filter = 'saturate(1.05) contrast(1.02)';
+            if (!ctx) {
+                console.error('Could not get canvas context');
+                return;
             }
             
-            // Create a dynamic texture from the canvas with improved settings
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.encoding = THREE.sRGBEncoding; // Ensure proper color encoding
-            texture.format = THREE.RGBAFormat;
-            texture.premultiplyAlpha = false; // Prevent alpha multiplication issues
-            
-            // Create material with transparency and proper blending
-            const material = new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true,
-                alphaTest: 0.01,
-                blending: THREE.CustomBlending,
-                blendSrc: THREE.SrcAlphaFactor,
-                blendDst: THREE.OneMinusSrcAlphaFactor
-            });
-            
-            // Apply material to the entity
-            el.getObject3D('mesh').material = material;
-            
-            // Update canvas with video frames
-            this.video = video;
-            this.canvas = canvas;
-            this.ctx = ctx;
-            this.texture = texture;
-            
-            // Force play the video on user interaction
-            document.addEventListener('click', () => {
-                video.play().catch(e => console.error("Video play error:", e));
-            }, { once: true });
+            // Rest of your code...
         },
         
         tick: function() {
-            if (!this.video || this.video.paused || this.video.ended) return;
+            if (!this.video || this.video.paused || this.video.ended || !this.ctx || !this.texture) return;
             
             // Draw video frame to canvas with improved color handling
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -251,22 +227,33 @@ function setupVideoPlayback() {
     scene.addEventListener('arReady', playVideos);
 }
 
-// Initialize the app when DOM is loaded
+// Modify the initialize function in app.js to ensure proper initialization sequence
 document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for the MindAR system to be fully ready before initializing other components
+    const scene = document.querySelector('a-scene');
+    
+    // Create a promise that resolves when AR is ready
+    const arReadyPromise = new Promise((resolve) => {
+        scene.addEventListener('arReady', () => {
+            console.log("MindAR is ready");
+            resolve();
+        });
+        
+        // Add a timeout fallback just in case
+        setTimeout(resolve, 3000);
+    });
+    
     // Initialize AR extensions first
     await arExtensions.initialize();
     
+    // Wait for AR system to be ready
+    await arReadyPromise;
+    
     // Then fetch animations
-    fetchAnimations();
+    await fetchAnimations();
     setupVideoPlayback();
     
-    // Add listener for AR events for debugging
-    const scene = document.querySelector('a-scene');
-    scene.addEventListener('arReady', () => {
-        console.log("MindAR is ready");
-    });
-    
     scene.addEventListener('arError', (event) => {
-        console.error("MindAR error:", event);
+    console.error("MindAR error:", event);
     });
 });
