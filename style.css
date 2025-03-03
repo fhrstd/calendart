@@ -31,30 +31,41 @@ a-plane {
 
 /* ==========================================================================
    AR Extensions Container - Main wrapper for calendar and hadith
-   Adjusted for fluid/responsive UI with non-centered position
+   Adjusted for symmetrical appearance with reliable animation
    ========================================================================== */
 
 .ar-extensions-container {
-  /* Position at bottom-right of screen instead of centered */
+  /* Position at bottom-right with symmetrical margins */
   position: fixed;
-  bottom: 20px;        /* Distance from bottom - adjust as needed */
-  right: 20px;         /* Distance from right - right-aligned positioning */
-  width: 40%;          /* Width as percentage of screen - more fluid */
-  min-width: 280px;    /* Minimum width to ensure readability */
-  max-width: 450px;    /* Maximum width to prevent excessive stretching */
-  padding: 0;          /* Remove padding from container, add to children */
+  bottom: 20px;
+  right: 20px;
+  width: 40%;
+  min-width: 280px;
+  max-width: 450px;
+  
+  /* Symmetrical padding */
+  padding: 0;
   
   /* Display settings */
-  display: none;       /* Initially hidden, changed to 'flex' when visible */
+  display: none;
   flex-direction: column;
-  gap: 10px;           /* Space between calendar and hadith */
+  gap: 15px;           /* Equal spacing between components */
   
   /* Visual appearance */
-  z-index: 1000;       /* Layer order - higher numbers appear on top */
+  z-index: 1000;
   pointer-events: auto;
   
-  /* Animation */
-  animation: slideIn 0.5s ease-in-out;
+  /* Animation setup - but not applied yet */
+  /* We'll add animation class separately to ensure it runs on first load */
+  opacity: 0;          /* Start invisible */
+  transform: translateX(40px); /* Start offset */
+  transition: opacity 0.5s ease, transform 0.5s ease; /* Smooth transition properties */
+}
+
+/* Animation class to be added via JavaScript */
+.ar-extensions-container.show-animation {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ==========================================================================
@@ -62,37 +73,35 @@ a-plane {
    ========================================================================== */
 
 .ar-calendar {
-  /* Box model */
-  padding: 12px 15px;
-  width: 100%;         /* Full width of parent */
+  /* Symmetrical box model */
+  padding: 15px;
+  width: 100%;
   box-sizing: border-box;
   
   /* Visual styles */
-  background-color: rgba(0, 0, 0, 0.75);  /* Slightly adjusted opacity */
+  background-color: rgba(0, 0, 0, 0.75);
   color: white;
   text-align: center;
-  border-radius: 8px;  /* Increased corner radius */
+  border-radius: 8px;
   
-  /* Shadow for better visual separation */
+  /* Symmetrical shadow */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  
-  /* Transition for smooth showing/hiding */
-  transition: all 0.3s ease;
 }
 
 /* Gregorian date display */
 .gregorian-date {
-  font-size: 13px;     /* Slightly smaller */
-  margin-bottom: 6px;  /* Space between dates */
-  opacity: 0.85;       /* Slightly dimmed compared to Hijri */
+  font-size: 14px;
+  margin-bottom: 8px;  /* Symmetrical spacing */
+  opacity: 0.85;
   font-weight: normal;
 }
 
 /* Hijri date display */
 .hijri-date {
-  font-size: 16px;     /* Slightly larger for emphasis */
-  font-weight: 500;    /* Semi-bold for emphasis */
-  line-height: 1.4;    /* Improved readability */
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-top: 8px;  /* Symmetrical spacing */
 }
 
 /* ==========================================================================
@@ -100,23 +109,20 @@ a-plane {
    ========================================================================== */
 
 .ar-hadith {
-  /* Box model */
+  /* Symmetrical box model */
   padding: 15px;
   width: 100%;
-  max-height: 40vh;    /* Viewport-relative height - more responsive */
-  overflow-y: auto;    /* Scrollable */
+  max-height: 40vh;
+  overflow-y: auto;
   box-sizing: border-box;
   
   /* Visual styles */
   background-color: rgba(0, 0, 0, 0.75);
   color: white;
-  border-radius: 8px;  /* Matching calendar radius */
+  border-radius: 8px;
   
-  /* Shadow for better visual separation */
+  /* Matching shadow to calendar */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  
-  /* Transition for smooth showing/hiding */
-  transition: all 0.3s ease;
 }
 
 /* Arabic text */
@@ -127,6 +133,7 @@ a-plane {
   direction: rtl;
   font-family: 'Traditional Arabic', 'Scheherazade New', Arial, sans-serif;
   text-align: right;
+  padding-bottom: 15px; /* Symmetrical padding */
 }
 
 /* Indonesian translation */
@@ -135,8 +142,9 @@ a-plane {
   line-height: 1.5;
   margin-bottom: 15px;
   text-align: left;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255,255,255,0.15);  /* Subtle separator */
+  padding-top: 15px;   /* Symmetrical padding */
+  padding-bottom: 15px; /* Symmetrical padding */
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 /* English translation */
@@ -145,8 +153,9 @@ a-plane {
   line-height: 1.5;
   margin-bottom: 15px;
   text-align: left;
-  border-top: 1px solid rgba(255,255,255,0.15);  /* Matching separator */
-  padding-top: 10px;
+  padding-top: 15px;   /* Symmetrical padding */
+  padding-bottom: 15px; /* Symmetrical padding */
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 /* Hadith source info */
@@ -155,17 +164,18 @@ a-plane {
   font-style: italic;
   color: #ccc;
   text-align: left;
-  margin-top: 8px;
+  margin-top: 15px;  /* Symmetrical spacing */
 }
 
 /* Language selector container */
 .hadith-language-selector {
   font-size: 12px;
-  margin-top: 12px;
-  text-align: left;
+  margin-top: 15px;  /* Symmetrical spacing */
+  text-align: center; /* Centered for symmetry */
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
+  justify-content: center; /* Centered buttons */
 }
 
 /* ==========================================================================
@@ -173,10 +183,10 @@ a-plane {
    ========================================================================== */
 
 .ar-extensions-container button {
-  background-color: rgba(60, 60, 60, 0.8);  /* More transparent */
+  background-color: rgba(60, 60, 60, 0.8);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 15px;  /* Symmetrical padding */
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -186,33 +196,17 @@ a-plane {
 /* Button hover state */
 .ar-extensions-container button:hover {
   background-color: rgba(80, 80, 80, 0.9);
-  transform: translateY(-1px);  /* Subtle lift effect */
+  transform: translateY(-2px);
 }
 
 /* Active/selected button */
 .ar-extensions-container button.selected {
-  background-color: rgba(0, 123, 255, 0.8);  /* Semi-transparent blue */
+  background-color: rgba(0, 123, 255, 0.8);
   font-weight: 500;
 }
 
 /* ==========================================================================
-   Animations
-   ========================================================================== */
-
-/* Slide in animation - from right side */
-@keyframes slideIn {
-  from { 
-    transform: translateX(50px);
-    opacity: 0;
-  }
-  to { 
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* ==========================================================================
-   Media Queries - Enhanced responsive design adjustments
+   Media Queries - Symmetrical responsive design
    ========================================================================== */
 
 /* For smaller phones - portrait orientation */
@@ -220,23 +214,25 @@ a-plane {
   .ar-extensions-container {
     bottom: 15px;
     right: 15px;
-    width: calc(100% - 30px);  /* Full width minus margins */
-    min-width: auto;           /* Override min-width */
+    width: calc(100% - 30px);  /* Symmetrical margins */
+    min-width: auto;
   }
   
   .ar-calendar, .ar-hadith {
-    padding: 12px 10px;  /* Less horizontal padding */
+    padding: 12px;  /* Symmetrical padding */
   }
   
   .hadith-arabic {
-    font-size: 16px;  /* Smaller text */
+    font-size: 16px;
+    padding-bottom: 12px;  /* Reduced but symmetrical */
   }
   
   .hadith-id, .hadith-en {
     font-size: 13px;
+    padding-top: 12px;     /* Reduced but symmetrical */
+    padding-bottom: 12px;  /* Reduced but symmetrical */
   }
   
-  /* Less height for hadith on small screens */
   .ar-hadith {
     max-height: 30vh;
   }
@@ -247,22 +243,17 @@ a-plane {
   .ar-extensions-container {
     bottom: 10px;
     right: 10px;
-    width: 50%;  /* Half width in landscape */
+    width: 50%;
   }
   
   .ar-hadith {
-    max-height: 60vh;  /* More vertical space in landscape */
+    max-height: 60vh;
   }
   
-  /* Smaller text in landscape */
-  .hadith-arabic {
-    font-size: 15px;
-    margin-bottom: 10px;
-  }
-  
-  .hadith-id, .hadith-en {
-    font-size: 12px;
-    margin-bottom: 10px;
+  .hadith-arabic, .hadith-id, .hadith-en {
+    padding-top: 10px;     /* Reduced but symmetrical */
+    padding-bottom: 10px;  /* Reduced but symmetrical */
+    margin-bottom: 10px;   /* Symmetrical */
   }
 }
 
