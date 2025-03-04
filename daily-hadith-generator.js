@@ -1,36 +1,60 @@
 import fs from 'fs';
 import fetch from 'node-fetch';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
+const execPromise = promisify(exec);
 const books = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah'];
 const TOTAL_HADITHS = 100; // Reduced from 500 for faster generation
 
-// Using LibreTranslate.com for translations
-async function translateText(text, targetLanguage = 'en') {
+// Translation using googletrans Python package
+async function translateWithPython(text) {
     try {
-        // Using the LibreTranslate.com endpoint
-        const url = 'https://libretranslate.com/translate';
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                q: text,
-                source: 'auto', // Auto-detect source language
-                target: targetLanguage,
-                format: 'text'
-            })
-        });
+        // Create a temporary file with the text to translate
+        const tempFileName = `temp_translate_${Date.now()}.txt`;
+        fs.writeFileSync(tempFileName, text, 'utf8');
         
-        if (!response.ok) {
-            console.error('Translation API error:', response.status, response.statusText);
+        // Create a simple Python script that uses googletrans
+        const pythonScript = `
+import sys
+from googletrans import Translator
+
+try:
+    # Read text from file
+    with open("${tempFileName}", "r", encoding="utf-8") as f:
+        text = f.read()
+    
+    # Initialize translator
+    translator = Translator()
+    
+    # Translate text from Indonesian to English
+    result = translator.translate(text, src='id', dest='en')
+    
+    # Print the translation
+    print(result.text)
+except Exception as e:
+    print(f"ERROR: {str(e)}", file=sys.stderr)
+    sys.exit(1)
+`;
+        
+        const pythonFileName = `translate_script_${Date.now()}.py`;
+        fs.writeFileSync(pythonFileName, pythonScript, 'utf8');
+        
+        // Execute the Python script
+        const { stdout, stderr } = await execPromise(`python ${pythonFileName}`);
+        
+        // Clean up temporary files
+        fs.unlinkSync(tempFileName);
+        fs.unlinkSync(pythonFileName);
+        
+        if (stderr) {
+            console.error('Python translation error:', stderr);
             return fallbackTranslate(text);
         }
         
-        const data = await response.json();
-        return data.translatedText;
+        return stdout.trim();
     } catch (error) {
-        console.error('Translation error:', error.message);
+        console.error('Translation execution error:', error.message);
         return fallbackTranslate(text);
     }
 }
@@ -91,7 +115,7 @@ async function fetchHadith(book, number) {
         // Translate the Indonesian text to English
         if (hadith.id) {
             try {
-                englishTranslation = await translateText(hadith.id);
+                englishTranslation = await translateWithPython(hadith.id);
                 console.log(`✓ Translated hadith ${book}-${number}`);
             } catch (error) {
                 console.error(`❌ Translation failed for ${book}-${number}:`, error.message);
@@ -169,7 +193,7 @@ async function generateDailyHadith() {
         }
         
         // Small delay to avoid overwhelming the APIs
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // If we didn't get enough hadiths, add fallbacks
@@ -201,4 +225,44 @@ async function generateDailyHadith() {
     console.log(`✅ Successfully generated daily-hadith.json with ${hadithList.length} hadiths`);
 }
 
-generateDailyHadith().catch(console.error);
+// Check if Python and googletrans are installed
+async function checkPythonDependencies() {
+    try {
+        // Check if Python is installed
+        await execPromise('python --version');
+        
+        // Check if googletrans is installed
+        try {
+            await execPromise('pip show googletrans');
+            console.log('✅ Python and googletrans are installed');
+            return true;
+        } catch (err) {
+            console.log('⚠️ googletrans is not installed. Installing now...');
+            try {
+                await execPromise('pip install googletrans==4.0.0-rc1');
+                console.log('✅ googletrans installed successfully');
+                return true;
+            } catch (pipErr) {
+                console.error('❌ Failed to install googletrans:', pipErr.message);
+                console.error('Please install it manually with: pip install googletrans==4.0.0-rc1');
+                return false;
+            }
+        }
+    } catch (err) {
+        console.error('❌ Python is not installed or not in PATH');
+        console.error('Please install Python and then install googletrans with: pip install googletrans==4.0.0-rc1');
+        return false;
+    }
+}
+
+// Main function
+async function main() {
+    const dependenciesOk = await checkPythonDependencies();
+    if (dependenciesOk) {
+        await generateDailyHadith();
+    } else {
+        console.error('❌ Cannot proceed without required dependencies');
+    }
+}
+
+main().catch(console.error);
