@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Add reload.js before other scripts -->
-  <script src="reload.js"></script>
+  <script>
+  window.onload = function() {
+      if (!sessionStorage.getItem('reloaded')) {
+          sessionStorage.setItem('reloaded', 'true');
+          setTimeout(() => {
+              window.location.reload();
+          }, 7000); // Wait for 500ms after everything is loaded
+      }
+  };
+  </script>
   
   <!-- A-Frame & MindAR -->
   <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
