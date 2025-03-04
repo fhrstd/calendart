@@ -88,8 +88,8 @@ export class HadithDisplay {
     hadithDiv.className = 'ar-hadith';
     hadithDiv.style.cssText = `
       padding: 10px;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
+      background-color: rgba(255, 255, 255, 0.7);
+      color: black;
       text-align: center;
       font-family: Arial, sans-serif;
       border-radius: 5px;
