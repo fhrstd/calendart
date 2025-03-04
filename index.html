@@ -17,73 +17,7 @@
   <script type="module" src="hadith.js"></script>
   <script type="module" src="ar-extensions.js"></script>
   <script type="module" src="app.js"></script>
-  <!-- Add this script in the head section of index.html before your other scripts -->
-  <script>
-    // Global error handler
-    window.addEventListener('error', function(event) {
-      console.error('Global error:', event.error || event.message);
-      
-      // Check for Three.js matrix errors
-      if (event.message && (
-          event.message.includes("can't invert matrix") || 
-          event.message.includes("determinant is 0") ||
-          event.message.includes("Cannot read properties of null")
-      )) {
-        console.warn("Detected Three.js initialization error - this may resolve on next render cycle");
-      }
-      
-      // Don't prevent default handling
-      return false;
-    });
-    
-    // Promise rejection handler
-    window.addEventListener('unhandledrejection', function(event) {
-      console.error('Unhandled promise rejection:', event.reason);
-      
-      // Prevent the error from closing message channels
-      if (event.reason && event.reason.message && 
-          event.reason.message.includes('message channel closed')) {
-        event.preventDefault();
-        console.warn("Prevented channel closure error from propagating");
-      }
-    });
-    
-    // Monkey patch THREE.Matrix3.prototype.invert or getInverse
-    document.addEventListener('DOMContentLoaded', function() {
-      // Wait for THREE to be available
-      const checkTHREE = setInterval(function() {
-        if (window.THREE) {
-          clearInterval(checkTHREE);
-          
-          // Patch Matrix3.invert or getInverse
-          const Matrix3 = THREE.Matrix3;
-          const originalFn = Matrix3.prototype.invert || Matrix3.prototype.getInverse;
-          
-          if (originalFn) {
-            Matrix3.prototype.invert = function(target) {
-              try {
-                return originalFn.call(this, target);
-              } catch (e) {
-                console.warn("Matrix inversion failed, using identity matrix instead");
-                if (target) {
-                  target.identity();
-                  return target;
-                }
-                return this.identity();
-              }
-            };
-            
-            // If getInverse exists and is different from invert
-            if (Matrix3.prototype.getInverse && Matrix3.prototype.getInverse !== Matrix3.prototype.invert) {
-              Matrix3.prototype.getInverse = Matrix3.prototype.invert;
-            }
-            
-            console.log("THREE.Matrix3 patched for error handling");
-          }
-        }
-      }, 100);
-    });
-  </script>
+
   <link rel="stylesheet" href="style.css">
   <style>
     body { margin: 0; overflow: hidden; }
