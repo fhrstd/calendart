@@ -79,13 +79,13 @@ a-plane {
   box-sizing: border-box;
   
   /* Visual styles */
-  background-color: rgba(0, 0, 0, 0.75);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.75);
+  color: black;
   text-align: center;
   border-radius: 8px;
   
   /* Symmetrical shadow */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
 }
 
 /* Gregorian date display */
@@ -117,12 +117,12 @@ a-plane {
   box-sizing: border-box;
   
   /* Visual styles */
-  background-color: rgba(0, 0, 0, 0.75);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.75);
+  color: black;
   border-radius: 8px;
   
   /* Matching shadow to calendar */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
 }
 
 /* Arabic text */
@@ -184,7 +184,7 @@ a-plane {
 
 .ar-extensions-container button {
   background-color: rgba(60, 60, 60, 0.8);
-  color: white;
+  color: black;
   border: none;
   padding: 8px 15px;  /* Symmetrical padding */
   border-radius: 4px;
