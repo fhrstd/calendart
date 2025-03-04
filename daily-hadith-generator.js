@@ -4,6 +4,70 @@ import fetch from 'node-fetch';
 const books = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah'];
 const TOTAL_HADITHS = 100; // Reduced from 500 for faster generation
 
+// Using LibreTranslate.com for translations
+async function translateText(text, targetLanguage = 'en') {
+    try {
+        // Using the LibreTranslate.com endpoint
+        const url = 'https://libretranslate.com/translate';
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                q: text,
+                source: 'auto', // Auto-detect source language
+                target: targetLanguage,
+                format: 'text'
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('Translation API error:', response.status, response.statusText);
+            return fallbackTranslate(text);
+        }
+        
+        const data = await response.json();
+        return data.translatedText;
+    } catch (error) {
+        console.error('Translation error:', error.message);
+        return fallbackTranslate(text);
+    }
+}
+
+// Fallback translation with dictionary-based approach
+const commonPhrases = {
+    'Sesungguhnya setiap amalan tergantung pada niatnya': 'Indeed, actions are judged by intentions',
+    'Barangsiapa mengajak kepada kebaikan': 'Whoever calls to goodness',
+    // Add more common phrases here
+};
+
+function dictionaryTranslate(text) {
+    // Look for exact matches
+    if (commonPhrases[text]) {
+        return commonPhrases[text];
+    }
+    
+    // Try to find partial matches
+    for (const [indo, eng] of Object.entries(commonPhrases)) {
+        if (text.includes(indo)) {
+            return text.replace(indo, eng);
+        }
+    }
+    
+    return null; // No match found
+}
+
+// Fallback translation function
+function fallbackTranslate(text) {
+    // Try dictionary approach first
+    const dictResult = dictionaryTranslate(text);
+    if (dictResult) return dictResult;
+    
+    // Otherwise mark as needing translation
+    return `[Translation needed: ${text.substring(0, 30)}...]`;
+}
+
 async function fetchHadith(book, number) {
     console.log(`📚 Fetching ${book}, Hadith #${number}`);
     try {
@@ -22,6 +86,20 @@ async function fetchHadith(book, number) {
         }
         
         const hadith = data.data.contents;
+        let englishTranslation;
+        
+        // Translate the Indonesian text to English
+        if (hadith.id) {
+            try {
+                englishTranslation = await translateText(hadith.id);
+                console.log(`✓ Translated hadith ${book}-${number}`);
+            } catch (error) {
+                console.error(`❌ Translation failed for ${book}-${number}:`, error.message);
+                englishTranslation = fallbackTranslate(hadith.id);
+            }
+        } else {
+            englishTranslation = '[No Indonesian text to translate]';
+        }
         
         return {
             id: `${book}-${number}`,
@@ -31,19 +109,13 @@ async function fetchHadith(book, number) {
             text: {
                 arab: hadith.arab || '',
                 id: hadith.id || '',
-                en: simpleTranslate(hadith.id) // Simple placeholder translation
+                en: englishTranslation
             }
         };
     } catch (error) {
         console.error(`❌ Error fetching ${book} hadith ${number}:`, error.message);
         return null;
     }
-}
-
-function simpleTranslate(indonesianText) {
-    // In a real implementation, you would use an actual translation service
-    // This is just a placeholder
-    return `[English translation would be here]`;
 }
 
 function capitalize(str) {
@@ -96,8 +168,8 @@ async function generateDailyHadith() {
             console.log(`✅ Added hadith #${hadithList.length}: ${hadith.source}`);
         }
         
-        // Small delay to avoid overwhelming the API
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Small delay to avoid overwhelming the APIs
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay to avoid rate limiting
     }
 
     // If we didn't get enough hadiths, add fallbacks
